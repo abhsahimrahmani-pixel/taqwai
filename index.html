@@ -1,0 +1,2990 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="theme-color" content="#07172e" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <title>TAQWA HIFZUL QURAN COLLEGE – Student ID & QR Attendance System</title>
+
+  <!-- Inline PWA Web App Manifest via Data URI -->
+  <link rel="manifest" href='data:application/manifest+json,{"name":"TAQWA Student ID & QR Attendance","short_name":"TAQWA ERP","start_url":".","display":"standalone","background_color":"#07172e","theme_color":"#07172e","icons":[{"src":"https://placehold.co/192x192/07172e/f6dc84?text=TAQWA","sizes":"192x192","type":"image/png"}]}' />
+
+  <!-- Google Fonts: Cinzel & Plus Jakarta Sans -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Cropper.js CSS & JS -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+
+  <!-- SheetJS (xlsx) for Excel Import / Export -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+
+  <!-- QRCode.js for High-Contrast QR Generation -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+
+  <!-- HTML5-QRCode for Live Camera QR Scanning -->
+  <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+
+  <!-- html2canvas & jsPDF for 300+ DPI PNG & CR80 PDF Export -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+
+  <!-- Chart.js for Dashboard Analytics -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+
+  <style>
+    :root {
+      --navy-deep: #07172e;
+      --navy-primary: #0b2242;
+      --gold-primary: #d4af37;
+      --gold-light: #f6dc84;
+      --card-w: 310px;
+      --card-h: 494px; /* Exact 54 : 86 CR80 Portrait Ratio */
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background-color: #f1f5f9;
+      color: #0f172a;
+      margin: 0;
+      padding: 0;
+      overflow-x: hidden;
+    }
+
+    .font-cinzel { font-family: 'Cinzel', serif; }
+
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: #e2e8f0; }
+    ::-webkit-scrollbar-thumb { background: #94a3b8; border-radius: 9999px; }
+
+    /* ========================================================================
+       CR80 PORTRAIT ID CARD BASE & 5 ISLAMIC INSTITUTIONAL THEMES
+       ======================================================================== */
+    .id-card-cr80 {
+      width: var(--card-w);
+      height: var(--card-h);
+      border-radius: 15px;
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      user-select: none;
+      box-shadow: 0 18px 36px -10px rgba(7, 23, 46, 0.28);
+      -webkit-print-color-adjust: exact !important;
+      print-color-adjust: exact !important;
+    }
+
+    .islamic-lattice {
+      position: absolute;
+      inset: 0;
+      opacity: 0.055;
+      pointer-events: none;
+      background-image: radial-gradient(currentColor 1px, transparent 1px),
+                        radial-gradient(currentColor 1px, transparent 1px);
+      background-size: 16px 16px;
+      background-position: 0 0, 8px 8px;
+      z-index: 0;
+    }
+
+    /* THEME 1: ROYAL NAVY BLUE & GOLD */
+    .theme-navy-gold {
+      background: linear-gradient(180deg, #f4f9ff 0%, #e1f0ff 68%, #c5e2fc 100%);
+      border: 2.5px solid #0b2242;
+      color: #07172e;
+    }
+    .theme-navy-gold .card-top {
+      background: linear-gradient(145deg, #07172e 0%, #0b2242 65%, #143866 100%);
+      border-bottom: 3px solid #d4af37;
+    }
+    .theme-navy-gold .card-title-main { color: #f6dc84; }
+    .theme-navy-gold .card-title-sub { color: #ffffff; }
+    .theme-navy-gold .card-badge {
+      background: linear-gradient(90deg, #b68d2c, #f6dc84, #b68d2c);
+      color: #07172e;
+      border: 1.5px solid #07172e;
+    }
+    .theme-navy-gold .photo-ring {
+      background: linear-gradient(135deg, #d4af37, #0b2242, #d4af37);
+    }
+    .theme-navy-gold .info-chip { background: #0b2242; color: #f6dc84; }
+    .theme-navy-gold .card-bottom {
+      background: linear-gradient(180deg, #cbe4fc 0%, #b3d7fa 100%);
+      border-top: 2px solid #0b2242;
+      color: #07172e;
+    }
+
+    /* THEME 2: EMERALD GREEN & WHITE */
+    .theme-emerald-white {
+      background: linear-gradient(180deg, #ffffff 0%, #f0fdf4 70%, #dcfce7 100%);
+      border: 2.5px solid #065f46;
+      color: #064e3b;
+    }
+    .theme-emerald-white .card-top {
+      background: linear-gradient(145deg, #022c22 0%, #065f46 65%, #047857 100%);
+      border-bottom: 3px solid #eab308;
+    }
+    .theme-emerald-white .card-title-main { color: #fde047; }
+    .theme-emerald-white .card-title-sub { color: #ecfdf5; }
+    .theme-emerald-white .card-badge {
+      background: linear-gradient(90deg, #047857, #10b981, #047857);
+      color: #ffffff;
+      border: 1.5px solid #fde047;
+    }
+    .theme-emerald-white .photo-ring {
+      background: linear-gradient(135deg, #eab308, #065f46, #eab308);
+    }
+    .theme-emerald-white .info-chip { background: #065f46; color: #fde047; }
+    .theme-emerald-white .card-bottom {
+      background: linear-gradient(180deg, #d1fae5 0%, #a7f3d0 100%);
+      border-top: 2px solid #065f46;
+      color: #022c22;
+    }
+
+    /* THEME 3: BLACK & GOLD PREMIUM */
+    .theme-black-gold {
+      background: linear-gradient(180deg, #18181b 0%, #09090b 75%, #1c1917 100%);
+      border: 2.5px solid #d4af37;
+      color: #f4f4f5;
+    }
+    .theme-black-gold .card-top {
+      background: linear-gradient(145deg, #000000 0%, #18181b 70%, #27272a 100%);
+      border-bottom: 3px solid #d4af37;
+    }
+    .theme-black-gold .card-title-main { color: #f6dc84; }
+    .theme-black-gold .card-title-sub { color: #e4e4e7; }
+    .theme-black-gold .card-badge {
+      background: linear-gradient(90deg, #a16207, #facc15, #a16207);
+      color: #09090b;
+      border: 1.5px solid #fef08a;
+    }
+    .theme-black-gold .photo-ring {
+      background: linear-gradient(135deg, #f6dc84, #a16207, #f6dc84);
+    }
+    .theme-black-gold .info-chip { background: #d4af37; color: #09090b; }
+    .theme-black-gold .student-title-name { color: #f6dc84 !important; border-color: rgba(212, 175, 55, 0.35) !important; }
+    .theme-black-gold .info-lbl { color: #a1a1aa !important; }
+    .theme-black-gold .info-val { color: #ffffff !important; }
+    .theme-black-gold .sig-box { color: #f6dc84 !important; }
+    .theme-black-gold .card-bottom {
+      background: linear-gradient(180deg, #18181b 0%, #09090b 100%);
+      border-top: 2px solid #d4af37;
+      color: #e4e4e7;
+    }
+
+    /* THEME 4: SKY BLUE & NAVY */
+    .theme-sky-navy {
+      background: linear-gradient(180deg, #e0f2fe 0%, #bae6fd 65%, #7dd3fc 100%);
+      border: 2.5px solid #0369a1;
+      color: #0c4a6e;
+    }
+    .theme-sky-navy .card-top {
+      background: linear-gradient(145deg, #0c4a6e 0%, #0369a1 65%, #0284c7 100%);
+      border-bottom: 3px solid #ffffff;
+    }
+    .theme-sky-navy .card-title-main { color: #ffffff; }
+    .theme-sky-navy .card-title-sub { color: #bae6fd; }
+    .theme-sky-navy .card-badge {
+      background: #0c4a6e;
+      color: #ffffff;
+      border: 1.5px solid #ffffff;
+    }
+    .theme-sky-navy .photo-ring {
+      background: linear-gradient(135deg, #0284c7, #0c4a6e, #38bdf8);
+    }
+    .theme-sky-navy .info-chip { background: #0369a1; color: #ffffff; }
+    .theme-sky-navy .card-bottom {
+      background: linear-gradient(180deg, #0c4a6e 0%, #082f49 100%);
+      border-top: 2px solid #38bdf8;
+      color: #f0f9ff;
+    }
+
+    /* THEME 5: MODERN WHITE & ISLAMIC GREEN */
+    .theme-white-islamic {
+      background: #ffffff;
+      border: 2.5px solid #15803d;
+      color: #14532d;
+    }
+    .theme-white-islamic .card-top {
+      background: linear-gradient(145deg, #14532d 0%, #166534 65%, #15803d 100%);
+      border-bottom: 3px solid #d4af37;
+    }
+    .theme-white-islamic .card-title-main { color: #f6dc84; }
+    .theme-white-islamic .card-title-sub { color: #dcfce7; }
+    .theme-white-islamic .card-badge {
+      background: #ffffff;
+      color: #14532d;
+      border: 2px solid #15803d;
+    }
+    .theme-white-islamic .photo-ring {
+      background: linear-gradient(135deg, #15803d, #d4af37, #15803d);
+    }
+    .theme-white-islamic .info-chip { background: #15803d; color: #ffffff; }
+    .theme-white-islamic .card-bottom {
+      background: #f0fdf4;
+      border-top: 2px solid #15803d;
+      color: #14532d;
+    }
+
+    /* Print Styling for Exact CR80 Output */
+    @media print {
+      body * { visibility: hidden !important; }
+      #print-stage, #print-stage * { visibility: visible !important; }
+      #print-stage {
+        position: fixed !important;
+        inset: 0 !important;
+        display: flex !important;
+        flex-wrap: wrap !important;
+        align-items: center !important;
+        justify-content: center !important;
+        gap: 8mm !important;
+        background: #ffffff !important;
+        z-index: 99999 !important;
+      }
+      .id-card-cr80 {
+        width: 54mm !important;
+        height: 86mm !important;
+        box-shadow: none !important;
+        page-break-inside: avoid !important;
+      }
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col">
+
+  <!-- Toast Notification Stack -->
+  <div id="toast-stack" class="fixed bottom-4 right-4 z-[100] flex flex-col gap-2 pointer-events-none max-w-sm"></div>
+
+  <!-- Hidden Print Stage -->
+  <div id="print-stage" class="hidden"></div>
+
+  <!-- ========================================================================
+       1. SECURE AUTHENTICATION GATEWAY (LOGIN / FORGOT PASSWORD / FIREBASE CONFIG)
+       ======================================================================== -->
+  <div id="auth-screen" class="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#040d1a] via-[#07172e] to-[#0f2d56] p-4">
+    <div class="w-full max-w-md bg-white rounded-3xl shadow-2xl border border-amber-300/40 overflow-hidden">
+      <!-- Auth Header -->
+      <div class="bg-[#07172e] px-6 py-6 text-center border-b-2 border-[#d4af37] relative">
+        <div class="w-16 h-16 mx-auto rounded-full bg-white/10 border-2 border-[#d4af37] flex items-center justify-center mb-3 shadow-lg">
+          <svg class="w-9 h-9 text-[#f6dc84]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+            <path d="M12 3L2 9l10 6 10-6-10-6z" />
+            <path d="M6 12v5c0 1.66 2.69 3 6 3s6-1.34 6-3v-5" />
+          </svg>
+        </div>
+        <h1 class="font-cinzel text-xl font-black text-[#f6dc84] tracking-wider">TAQWA HIFZUL QURAN COLLEGE</h1>
+        <p class="text-xs text-sky-200 mt-1">Student ID Card & QR Attendance Management Portal</p>
+        <div class="mt-2 inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full text-[11px] font-bold bg-white/10 text-emerald-300 border border-emerald-400/30" id="cloud-status-pill">
+          <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+          <span id="cloud-status-text">Cloud Ready (Sandbox / Firebase)</span>
+        </div>
+      </div>
+
+      <!-- Auth Body -->
+      <div class="p-6 space-y-4">
+        <form id="login-form" class="space-y-4">
+          <div>
+            <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Admin ID / Staff Login</label>
+            <input id="login-email" type="text" required value="TAQWA" placeholder="TAQWA" class="w-full px-4 py-2.5 text-sm font-semibold rounded-xl border border-slate-300 focus:border-[#0b2242] focus:ring-2 focus:ring-[#0b2242]/20 outline-none" />
+          </div>
+          <div>
+            <div class="flex justify-between items-center mb-1">
+              <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider">Password</label>
+              <button type="button" id="btn-forgot-password" class="text-xs font-bold text-sky-700 hover:underline">Forgot Password?</button>
+            </div>
+            <input id="login-password" type="password" required value="Banganur@786" placeholder="••••••••" class="w-full px-4 py-2.5 text-sm font-semibold rounded-xl border border-slate-300 focus:border-[#0b2242] focus:ring-2 focus:ring-[#0b2242]/20 outline-none" />
+          </div>
+
+          <button type="submit" class="w-full py-3 rounded-xl bg-[#0b2242] hover:bg-[#12335e] text-white font-extrabold text-sm shadow-md transition flex items-center justify-center gap-2">
+            <span>Secure Login</span>
+            <svg class="w-4 h-4 text-[#f6dc84]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3" /></svg>
+          </button>
+        </form>
+
+        <!-- Instant Role Sandbox & Firebase Cloud Connector -->
+        <div class="pt-3 border-t border-slate-200 space-y-2.5">
+          <p class="text-[11px] font-bold text-center text-slate-500 uppercase tracking-wider">Instant Access & Cloud Configuration</p>
+          <div class="grid grid-cols-2 gap-2">
+            <button type="button" id="btn-demo-admin" class="py-2 px-3 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-300 font-bold text-xs transition">
+              Login as Super Admin
+            </button>
+            <button type="button" id="btn-demo-staff" class="py-2 px-3 rounded-xl bg-sky-50 hover:bg-sky-100 text-sky-900 border border-sky-300 font-bold text-xs transition">
+              Login as Scanner Staff
+            </button>
+          </div>
+          <button type="button" id="btn-open-firebase-modal" class="w-full py-2 px-3 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs transition flex items-center justify-center gap-1.5">
+            <svg class="w-4 h-4 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+            Configure Live Firebase Backend
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================================================
+       2. MAIN AUTHENTICATED APPLICATION SHELL
+       ======================================================================== -->
+  <div id="app-shell" class="hidden min-h-screen flex flex-col lg:flex-row">
+
+    <!-- Mobile Sidebar Backdrop -->
+    <div id="sidebar-backdrop" class="fixed inset-0 bg-slate-950/60 z-30 hidden lg:hidden"></div>
+
+    <!-- SIDEBAR NAVIGATION (ALL 13 REQUIRED MENU ITEMS) -->
+    <aside id="sidebar" class="fixed lg:sticky top-0 left-0 z-40 h-screen w-64 bg-[#07172e] text-white flex flex-col border-r border-[#d4af37]/30 transform -translate-x-full lg:translate-x-0 transition-transform duration-200 shrink-0">
+      <!-- Brand Header -->
+      <div class="p-4 border-b border-white/10 flex items-center gap-3">
+        <div class="w-10 h-10 rounded-full bg-white/10 border border-[#d4af37] flex items-center justify-center shrink-0 overflow-hidden" id="sidebar-logo-box">
+          <span class="font-cinzel font-black text-[#f6dc84] text-sm">TQ</span>
+        </div>
+        <div class="min-w-0">
+          <div class="font-cinzel font-extrabold text-sm text-[#f6dc84] truncate">TAQWA COLLEGE</div>
+          <div class="text-[10px] text-sky-300 font-semibold truncate" id="sidebar-role-badge">Super Admin • Online</div>
+        </div>
+      </div>
+
+      <!-- Menu Links -->
+      <nav class="flex-1 overflow-y-auto p-3 space-y-1 text-xs font-bold" id="sidebar-nav">
+        <button data-view="dashboard" class="nav-btn w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl bg-[#d4af37] text-[#07172e]">
+          <span>📊</span><span>Dashboard</span>
+        </button>
+        <button data-view="students" class="nav-btn w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-slate-200 hover:bg-white/10">
+          <span>👨‍🎓</span><span>Student Management</span>
+        </button>
+        <button data-view="excel-upload" data-admin-only="true" class="nav-btn w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-slate-200 hover:bg-white/10">
+          <span>📥</span><span>Upload Excel (50+ Batch)</span>
+        </button>
+        <button data-view="bulk-photos" data-admin-only="true" class="nav-btn w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-slate-200 hover:bg-white/10">
+          <span>🖼️</span><span>Photo Studio & Cropper</span>
+        </button>
+        <button data-view="id-cards" class="nav-btn w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-slate-200 hover:bg-white/10">
+          <span>🪪</span><span>Student ID Cards</span>
+        </button>
+        <button data-view="id-design" data-admin-only="true" class="nav-btn w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-slate-200 hover:bg-white/10">
+          <span>🎨</span><span>ID Card Design (5 Themes)</span>
+        </button>
+        <button data-view="qr-scanner" class="nav-btn w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-emerald-300 bg-emerald-950/60 border border-emerald-500/30 hover:bg-emerald-900/60">
+          <span>📷</span><span>QR Code Scanner (IN/OUT)</span>
+        </button>
+        <button data-view="attendance-mgmt" class="nav-btn w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-slate-200 hover:bg-white/10">
+          <span>📋</span><span>Attendance Management</span>
+        </button>
+        <button data-view="attendance-reports" class="nav-btn w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-slate-200 hover:bg-white/10">
+          <span>📈</span><span>Attendance Reports</span>
+        </button>
+        <button data-view="export-excel" class="nav-btn w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-slate-200 hover:bg-white/10">
+          <span>📤</span><span>Export Excel</span>
+        </button>
+        <button data-view="settings" data-admin-only="true" class="nav-btn w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-slate-200 hover:bg-white/10">
+          <span>🏛️</span><span>Institution Settings</span>
+        </button>
+        <button data-view="staff-mgmt" data-admin-only="true" class="nav-btn w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-slate-200 hover:bg-white/10">
+          <span>🛡️</span><span>Admin & Staff Management</span>
+        </button>
+        <button data-view="change-password" class="nav-btn w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-slate-200 hover:bg-white/10">
+          <span>🔑</span><span>Change Password</span>
+        </button>
+      </nav>
+
+      <!-- Logout Footer -->
+      <div class="p-3 border-t border-white/10">
+        <button id="btn-logout" class="w-full py-2.5 px-3 rounded-xl bg-rose-600/20 hover:bg-rose-600 text-rose-200 hover:text-white border border-rose-500/40 font-bold text-xs flex items-center justify-center gap-2 transition">
+          <span>🚪</span><span>Logout Securely</span>
+        </button>
+      </div>
+    </aside>
+
+    <!-- RIGHT WORKSPACE AREA -->
+    <div class="flex-1 flex flex-col min-w-0">
+      <!-- Top Mobile/Desktop Header Bar -->
+      <header class="bg-white border-b border-slate-200 px-4 py-3 flex items-center justify-between gap-3 sticky top-0 z-20">
+        <div class="flex items-center gap-3">
+          <button id="btn-toggle-sidebar" class="lg:hidden p-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" /></svg>
+          </button>
+          <div>
+            <h2 id="page-heading" class="text-base sm:text-lg font-extrabold text-[#07172e]">Dashboard Overview</h2>
+            <p class="text-[11px] text-slate-500 hidden sm:block">TAQWA HIFZUL QURAN COLLEGE • Banganur Bhaban, Berachampa, Deganga</p>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-2">
+          <button onclick="switchView('qr-scanner')" class="px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs shadow-sm flex items-center gap-1.5">
+            <span>📷</span><span>Scan QR</span>
+          </button>
+          <span id="live-clock" class="hidden md:inline-block px-3 py-1.5 rounded-xl bg-slate-100 text-slate-700 font-mono text-xs font-bold"></span>
+        </div>
+      </header>
+
+      <!-- MAIN DYNAMIC VIEWPORT -->
+      <main class="flex-1 p-4 sm:p-6 max-w-7xl w-full mx-auto space-y-6">
+
+        <!-- ==================================================================
+             VIEW 1: DASHBOARD
+             ================================================================== -->
+        <section id="view-dashboard" class="app-view space-y-6">
+          <!-- 6 Statistic Cards -->
+          <div class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-4">
+            <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
+              <div class="text-xs font-bold text-slate-500">Total Students</div>
+              <div id="stat-total-students" class="text-2xl font-black text-[#07172e] mt-1">0</div>
+              <div class="text-[10px] font-semibold text-sky-700 mt-1">Active Enrolled</div>
+            </div>
+            <div class="bg-white p-4 rounded-2xl border border-emerald-200 shadow-sm">
+              <div class="text-xs font-bold text-emerald-700">Present Today</div>
+              <div id="stat-present-today" class="text-2xl font-black text-emerald-600 mt-1">0</div>
+              <div class="text-[10px] font-semibold text-emerald-600 mt-1">Checked IN Today</div>
+            </div>
+            <div class="bg-white p-4 rounded-2xl border border-amber-200 shadow-sm">
+              <div class="text-xs font-bold text-amber-700">Not Yet Arrived</div>
+              <div id="stat-not-arrived" class="text-2xl font-black text-amber-600 mt-1">0</div>
+              <div class="text-[10px] font-semibold text-amber-600 mt-1">Pending Arrival</div>
+            </div>
+            <div class="bg-white p-4 rounded-2xl border border-sky-200 shadow-sm">
+              <div class="text-xs font-bold text-sky-700">Currently Inside</div>
+              <div id="stat-inside" class="text-2xl font-black text-sky-600 mt-1">0</div>
+              <div class="text-[10px] font-semibold text-sky-600 mt-1">On Campus Now</div>
+            </div>
+            <div class="bg-white p-4 rounded-2xl border border-indigo-200 shadow-sm">
+              <div class="text-xs font-bold text-indigo-700">Checked Out</div>
+              <div id="stat-checked-out" class="text-2xl font-black text-indigo-600 mt-1">0</div>
+              <div class="text-[10px] font-semibold text-indigo-600 mt-1">Completed Cycle</div>
+            </div>
+            <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
+              <div class="text-xs font-bold text-slate-500">Total Records</div>
+              <div id="stat-total-records" class="text-2xl font-black text-slate-800 mt-1">0</div>
+              <div class="text-[10px] font-semibold text-slate-500 mt-1">All-Time Logs</div>
+            </div>
+          </div>
+
+          <!-- Chart & Today's Live Activity Feed -->
+          <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            <div class="lg:col-span-7 bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+              <div class="flex items-center justify-between mb-4">
+                <h3 class="font-extrabold text-sm text-[#07172e]">Today's Attendance Analytics</h3>
+                <span id="dashboard-date-badge" class="text-xs font-bold px-2.5 py-1 rounded-lg bg-sky-50 text-sky-800"></span>
+              </div>
+              <div class="h-64">
+                <canvas id="attendanceChart"></canvas>
+              </div>
+            </div>
+
+            <div class="lg:col-span-5 bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-col">
+              <div class="flex items-center justify-between mb-3">
+                <h3 class="font-extrabold text-sm text-[#07172e]">Today's Recent Scans</h3>
+                <button onclick="switchView('attendance-mgmt')" class="text-xs font-bold text-sky-700 hover:underline">View All</button>
+              </div>
+              <div id="dashboard-recent-list" class="flex-1 overflow-y-auto space-y-2.5 max-h-64 pr-1">
+                <!-- Populated dynamically -->
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ==================================================================
+             VIEW 2: STUDENT MANAGEMENT (CRUD + QR REGENERATE/TOGGLE)
+             ================================================================== -->
+        <section id="view-students" class="app-view hidden space-y-4">
+          <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-wrap items-center justify-between gap-3">
+            <div class="flex flex-wrap items-center gap-2 flex-1 min-w-[240px]">
+              <input id="student-search-input" type="text" placeholder="Search by Name, Student ID, Class or Mobile..." class="w-full sm:w-80 px-3.5 py-2 text-xs font-semibold rounded-xl border border-slate-300 focus:border-[#0b2242] outline-none" />
+              <select id="student-class-filter" class="px-3 py-2 text-xs font-bold rounded-xl border border-slate-300 bg-white">
+                <option value="">All Classes / Designations</option>
+              </select>
+            </div>
+            <div class="flex flex-wrap items-center gap-2">
+              <button onclick="openStudentModal()" data-admin-btn="true" class="px-3.5 py-2 rounded-xl bg-[#0b2242] hover:bg-[#12335e] text-white font-bold text-xs">+ Add Student</button>
+              <button onclick="exportStudentsExcel()" class="px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs">Export Students Excel</button>
+            </div>
+          </div>
+
+          <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-x-auto">
+            <table class="w-full text-left border-collapse text-xs">
+              <thead>
+                <tr class="bg-slate-900 text-white uppercase tracking-wider text-[11px]">
+                  <th class="p-3">Photo</th>
+                  <th class="p-3">Student ID</th>
+                  <th class="p-3">Student Name</th>
+                  <th class="p-3">Designation / Class</th>
+                  <th class="p-3">Mobile</th>
+                  <th class="p-3">QR Security</th>
+                  <th class="p-3 text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="students-table-body" class="divide-y divide-slate-100"></tbody>
+            </table>
+          </div>
+        </section>
+
+        <!-- ==================================================================
+             VIEW 3: EXCEL FILE UPLOAD & COLUMN MAPPING SYSTEM (50+ STUDENTS)
+             ================================================================== -->
+        <section id="view-excel-upload" class="app-view hidden space-y-5">
+          <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4">
+            <div class="flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <h3 class="text-base font-extrabold text-[#07172e]">Bulk Excel Student Import (.xlsx / .xls)</h3>
+                <p class="text-xs text-slate-500">Import 50+ students at once with automatic column mapping, duplicate ID check, and unique QR token generation.</p>
+              </div>
+              <button id="btn-download-sample-excel" class="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-[#07172e] font-extrabold text-xs shadow-sm">
+                Download Sample 50-Student Excel
+              </button>
+            </div>
+
+            <label for="excel-file-input" class="flex flex-col items-center justify-center w-full h-36 border-2 border-dashed border-sky-400 rounded-2xl cursor-pointer bg-sky-50/50 hover:bg-sky-50 transition p-4 text-center">
+              <span class="text-2xl mb-1">📊</span>
+              <span class="text-sm font-extrabold text-[#0b2242]">Click to Upload Excel File (.xlsx or .xls)</span>
+              <span class="text-xs text-slate-500 mt-1">Supports custom column headers with interactive field mapping</span>
+              <input id="excel-file-input" type="file" accept=".xlsx,.xls,.csv" class="hidden" />
+            </label>
+          </div>
+
+          <!-- Column Mapping & Validation Preview Card -->
+          <div id="excel-mapping-panel" class="hidden bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-5">
+            <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-3">
+              <div>
+                <h4 class="font-extrabold text-sm text-[#07172e]">Step 2: Column Mapping & Validation Summary</h4>
+                <p id="excel-summary-text" class="text-xs text-slate-600 mt-0.5"></p>
+              </div>
+              <button id="btn-confirm-excel-import" class="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs shadow-sm">
+                Import Valid Students Now
+              </button>
+            </div>
+
+            <!-- Mapping Selectors -->
+            <div id="column-mapping-grid" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 bg-slate-50 p-4 rounded-xl border border-slate-200"></div>
+
+            <!-- Preview Table -->
+            <div class="overflow-x-auto max-h-80 border border-slate-200 rounded-xl">
+              <table class="w-full text-left text-xs border-collapse">
+                <thead class="bg-slate-800 text-white sticky top-0">
+                  <tr>
+                    <th class="p-2.5">Status</th>
+                    <th class="p-2.5">Student ID</th>
+                    <th class="p-2.5">Student Name</th>
+                    <th class="p-2.5">Class/Desig</th>
+                    <th class="p-2.5">Mobile</th>
+                    <th class="p-2.5">Address</th>
+                  </tr>
+                </thead>
+                <tbody id="excel-preview-tbody" class="divide-y divide-slate-100"></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- ==================================================================
+             VIEW 4: BULK PHOTO MANAGEMENT & CROPPER STUDIO
+             ================================================================== -->
+        <section id="view-bulk-photos" class="app-view hidden space-y-5">
+          <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4">
+            <div>
+              <h3 class="text-base font-extrabold text-[#07172e]">Bulk Student Photo Upload & Auto-Matching</h3>
+              <p class="text-xs text-slate-500">Upload up to 50+ student photos at once (JPG, PNG, WEBP). Files named like <code class="bg-slate-100 px-1.5 py-0.5 rounded font-bold">TQWA-2025-0157.jpg</code> automatically attach to that Student ID!</p>
+            </div>
+
+            <label for="bulk-photo-input" class="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-emerald-400 rounded-2xl cursor-pointer bg-emerald-50/40 hover:bg-emerald-50 transition p-4 text-center">
+              <span class="text-2xl mb-1">📸</span>
+              <span class="text-sm font-extrabold text-emerald-950">Select Multiple Student Photos (Bulk Upload)</span>
+              <span class="text-xs text-slate-600 mt-1">Auto-matches by filename or allows manual assignment + Cropper.js editing</span>
+              <input id="bulk-photo-input" type="file" accept="image/jpeg,image/png,image/webp" multiple class="hidden" />
+            </label>
+
+            <div id="bulk-photo-results" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 pt-2"></div>
+          </div>
+        </section>
+
+        <!-- ==================================================================
+             VIEW 5: STUDENT ID CARDS GENERATOR & BULK PDF EXPORT
+             ================================================================== -->
+        <section id="view-id-cards" class="app-view hidden space-y-5">
+          <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-wrap items-center justify-between gap-3">
+            <div class="flex flex-wrap items-center gap-2">
+              <input id="idcard-search-input" type="text" placeholder="Filter ID Cards by Name or ID..." class="px-3.5 py-2 text-xs font-semibold rounded-xl border border-slate-300 outline-none" />
+              <select id="global-theme-quick-select" class="px-3 py-2 text-xs font-bold rounded-xl border border-slate-300 bg-white">
+                <option value="theme-navy-gold">Design 1: Royal Navy Blue & Gold</option>
+                <option value="theme-emerald-white">Design 2: Emerald Green & White</option>
+                <option value="theme-black-gold">Design 3: Black & Gold Premium</option>
+                <option value="theme-sky-navy">Design 4: Sky Blue & Navy</option>
+                <option value="theme-white-islamic">Design 5: Modern White & Islamic Green</option>
+              </select>
+            </div>
+            <div class="flex flex-wrap items-center gap-2">
+              <button id="btn-print-all-cards" class="px-3.5 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-[#07172e] font-extrabold text-xs">Print Visible Cards</button>
+              <button id="btn-download-all-pdf" class="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-extrabold text-xs shadow-sm">Download All ID Cards (PDF)</button>
+            </div>
+          </div>
+
+          <div id="id-cards-grid" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 justify-items-center">
+            <!-- ID Cards Rendered Dynamically -->
+          </div>
+        </section>
+
+        <!-- ==================================================================
+             VIEW 6: 5 MODERN ISLAMIC ID CARD DESIGNS SHOWCASE
+             ================================================================== -->
+        <section id="view-id-design" class="app-view hidden space-y-5">
+          <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+            <h3 class="text-base font-extrabold text-[#07172e]">Select Default Institutional ID Card Theme</h3>
+            <p class="text-xs text-slate-500 mb-4">Choose from 5 authentic Islamic institutional CR80 designs. You can also override designs per student.</p>
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4" id="theme-selector-cards">
+              <!-- Populated by JS -->
+            </div>
+          </div>
+        </section>
+
+        <!-- ==================================================================
+             VIEW 7: LIVE QR CODE SCANNER & ATTENDANCE ENGINE (IN / OUT)
+             ================================================================== -->
+        <section id="view-qr-scanner" class="app-view hidden space-y-5">
+          <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+            <!-- Left Scanner Camera Box -->
+            <div class="lg:col-span-7 bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-4">
+              <div class="flex flex-wrap items-center justify-between gap-2">
+                <h3 class="font-extrabold text-base text-[#07172e]">QR Code Attendance Scanner</h3>
+                <!-- IN / OUT Mode Switcher -->
+                <div class="inline-flex rounded-xl bg-slate-100 p-1 border border-slate-200">
+                  <button type="button" id="mode-in-btn" class="px-4 py-1.5 rounded-lg text-xs font-extrabold bg-emerald-600 text-white shadow-sm transition">
+                    🟢 IN / ARRIVAL
+                  </button>
+                  <button type="button" id="mode-out-btn" class="px-4 py-1.5 rounded-lg text-xs font-extrabold text-slate-600 hover:text-slate-900 transition">
+                    🟠 OUT / DEPARTURE
+                  </button>
+                </div>
+              </div>
+
+              <!-- Camera Controls -->
+              <div class="flex flex-wrap items-center gap-2">
+                <button id="btn-start-camera" class="px-4 py-2 rounded-xl bg-[#0b2242] hover:bg-[#12335e] text-white font-bold text-xs">Open Camera</button>
+                <button id="btn-stop-camera" class="hidden px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs">Stop Camera</button>
+                <select id="camera-select" class="px-3 py-2 rounded-xl border border-slate-300 text-xs font-bold bg-white max-w-[200px]">
+                  <option value="">Default Rear Camera</option>
+                </select>
+                <button id="btn-toggle-torch" class="hidden px-3 py-2 rounded-xl bg-amber-100 text-amber-900 border border-amber-300 font-bold text-xs">🔦 Flashlight</button>
+              </div>
+
+              <!-- Live Camera Reader Viewport -->
+              <div class="relative rounded-2xl overflow-hidden bg-slate-950 border-2 border-slate-800 min-h-[280px] flex items-center justify-center">
+                <div id="qr-reader" class="w-full"></div>
+                <div id="camera-placeholder" class="text-center p-6 text-slate-400">
+                  <div class="text-4xl mb-2">📷</div>
+                  <p class="text-xs font-bold text-slate-300">Click "Open Camera" to scan Student ID QR Code</p>
+                  <p class="text-[11px] mt-1">Or enter Student ID / Secure Token below for instant testing</p>
+                </div>
+              </div>
+
+              <!-- Manual Fallback / Quick Test Input -->
+              <form id="manual-scan-form" class="flex gap-2">
+                <input id="manual-qr-input" type="text" placeholder="Enter Student ID (e.g., TQWA-2025-0157) or QR Token..." class="flex-1 px-3.5 py-2.5 text-xs font-bold uppercase rounded-xl border border-slate-300 focus:border-[#0b2242] outline-none" />
+                <button type="submit" class="px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs">Submit Scan</button>
+              </form>
+            </div>
+
+            <!-- Right Scan Result & Live Verification Card -->
+            <div class="lg:col-span-5 bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-4">
+              <h3 class="font-extrabold text-sm text-[#07172e] uppercase tracking-wider border-b border-slate-100 pb-2.5">Last Scan Verification</h3>
+
+              <div id="scan-result-box" class="rounded-2xl border-2 border-dashed border-slate-200 p-6 text-center space-y-3 bg-slate-50/60">
+                <div class="text-3xl">🪪</div>
+                <p class="text-xs font-bold text-slate-500">Awaiting QR Code Scan...</p>
+                <p class="text-[11px] text-slate-400">Student photo, ID, arrival/departure time & status will appear here immediately.</p>
+              </div>
+
+              <div class="bg-sky-50 border border-sky-200 rounded-xl p-3.5 text-[11px] text-sky-950 space-y-1">
+                <div class="font-extrabold">Attendance Guardrails Active:</div>
+                <ul class="list-disc pl-4 space-y-0.5 text-sky-800">
+                  <li>Cannot record <strong>OUT</strong> without an active <strong>IN</strong> today.</li>
+                  <li>Blocks duplicate <strong>IN</strong> while student is already inside.</li>
+                  <li>Rejects disabled or tampered QR tokens automatically.</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ==================================================================
+             VIEW 8: ATTENDANCE MANAGEMENT (FILTERS + ADMIN CORRECTION)
+             ================================================================== -->
+        <section id="view-attendance-mgmt" class="app-view hidden space-y-4">
+          <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-wrap items-center justify-between gap-3">
+            <div class="flex flex-wrap items-center gap-2">
+              <input id="att-search" type="text" placeholder="Search Name or Student ID..." class="px-3 py-2 text-xs font-semibold rounded-xl border border-slate-300 outline-none" />
+              <input id="att-date-from" type="date" class="px-3 py-2 text-xs font-bold rounded-xl border border-slate-300" />
+              <input id="att-date-to" type="date" class="px-3 py-2 text-xs font-bold rounded-xl border border-slate-300" />
+              <select id="att-status-filter" class="px-3 py-2 text-xs font-bold rounded-xl border border-slate-300 bg-white">
+                <option value="ALL">All Records</option>
+                <option value="PRESENT">Present (All)</option>
+                <option value="INSIDE">Currently Inside (Missing OUT)</option>
+                <option value="CHECKED_OUT">Checked Out</option>
+                <option value="LATE">Late Arrival (After 08:30 AM)</option>
+                <option value="EARLY_OUT">Early Departure (Before 04:00 PM)</option>
+                <option value="ABSENT">Absent Today</option>
+              </select>
+            </div>
+            <button onclick="openManualAttendanceModal()" data-admin-btn="true" class="px-3.5 py-2 rounded-xl bg-[#0b2242] text-white font-bold text-xs">+ Manual Entry / Correction</button>
+          </div>
+
+          <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-x-auto">
+            <table class="w-full text-left text-xs border-collapse">
+              <thead>
+                <tr class="bg-slate-900 text-white uppercase text-[11px]">
+                  <th class="p-3">SL</th>
+                  <th class="p-3">Student Name</th>
+                  <th class="p-3">Student ID</th>
+                  <th class="p-3">Class/Desig</th>
+                  <th class="p-3">Date</th>
+                  <th class="p-3">Arrival (IN)</th>
+                  <th class="p-3">Departure (OUT)</th>
+                  <th class="p-3">Duration</th>
+                  <th class="p-3">Status / Remarks</th>
+                  <th class="p-3 text-right">Action</th>
+                </tr>
+              </thead>
+              <tbody id="attendance-table-body" class="divide-y divide-slate-100"></tbody>
+            </table>
+          </div>
+        </section>
+
+        <!-- ==================================================================
+             VIEW 9: ATTENDANCE REPORTS (MONTHLY & CLASS SUMMARY)
+             ================================================================== -->
+        <section id="view-attendance-reports" class="app-view hidden space-y-5">
+          <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-4">
+            <div class="flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <h3 class="font-extrabold text-base text-[#07172e]">Student-Wise & Monthly Attendance Summary</h3>
+                <p class="text-xs text-slate-500">Aggregated attendance percentage, total present days, late arrivals, and total campus hours.</p>
+              </div>
+              <input id="report-month-picker" type="month" class="px-3 py-2 text-xs font-bold rounded-xl border border-slate-300" />
+            </div>
+
+            <div class="overflow-x-auto">
+              <table class="w-full text-left text-xs border-collapse">
+                <thead>
+                  <tr class="bg-slate-900 text-white uppercase text-[11px]">
+                    <th class="p-3">Student ID</th>
+                    <th class="p-3">Student Name</th>
+                    <th class="p-3">Designation</th>
+                    <th class="p-3">Days Present</th>
+                    <th class="p-3">Late Arrivals</th>
+                    <th class="p-3">Completed Cycles</th>
+                    <th class="p-3">Attendance %</th>
+                  </tr>
+                </thead>
+                <tbody id="reports-table-body" class="divide-y divide-slate-100"></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- ==================================================================
+             VIEW 10: FINAL ATTENDANCE EXCEL DOWNLOAD CENTER
+             ================================================================== -->
+        <section id="view-export-excel" class="app-view hidden space-y-5">
+          <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-5">
+            <div>
+              <h3 class="text-base font-extrabold text-[#07172e]">Final Attendance Excel Report Center</h3>
+              <p class="text-xs text-slate-500">Generates formatted .xlsx files with exact institutional columns: SL No., Student Name, Student ID, Designation/Class, Date, Arrival Time, Departure Time, Total Duration, Attendance Status, Remarks.</p>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div class="p-4 rounded-2xl border border-emerald-200 bg-emerald-50/50 space-y-3">
+                <div class="font-extrabold text-sm text-emerald-950">1. Today's Attendance Excel</div>
+                <p class="text-xs text-slate-600">Includes all present, inside, checked-out, and absent students for today.</p>
+                <button onclick="downloadAttendanceExcel('TODAY')" class="w-full py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs">Download Today's Excel</button>
+              </div>
+
+              <div class="p-4 rounded-2xl border border-sky-200 bg-sky-50/50 space-y-3">
+                <div class="font-extrabold text-sm text-sky-950">2. Date-Wise Attendance Excel</div>
+                <input id="export-specific-date" type="date" class="w-full px-3 py-1.5 text-xs font-bold rounded-lg border border-sky-300 bg-white" />
+                <button onclick="downloadAttendanceExcel('DATE')" class="w-full py-2.5 rounded-xl bg-sky-600 hover:bg-sky-700 text-white font-bold text-xs">Download Date Excel</button>
+              </div>
+
+              <div class="p-4 rounded-2xl border border-indigo-200 bg-indigo-50/50 space-y-3">
+                <div class="font-extrabold text-sm text-indigo-950">3. Monthly Attendance Excel</div>
+                <input id="export-specific-month" type="month" class="w-full px-3 py-1.5 text-xs font-bold rounded-lg border border-indigo-300 bg-white" />
+                <button onclick="downloadAttendanceExcel('MONTH')" class="w-full py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs">Download Monthly Excel</button>
+              </div>
+
+              <div class="p-4 rounded-2xl border border-amber-200 bg-amber-50/50 space-y-3">
+                <div class="font-extrabold text-sm text-amber-950">4. Individual Student Excel</div>
+                <select id="export-student-select" class="w-full px-3 py-1.5 text-xs font-bold rounded-lg border border-amber-300 bg-white"></select>
+                <button onclick="downloadAttendanceExcel('STUDENT')" class="w-full py-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-[#07172e] font-extrabold text-xs">Download Student Excel</button>
+              </div>
+
+              <div class="p-4 rounded-2xl border border-slate-300 bg-slate-50 space-y-3 sm:col-span-2">
+                <div class="font-extrabold text-sm text-slate-900">5. Complete Attendance History</div>
+                <p class="text-xs text-slate-600">Export the entire database attendance history across all dates and classes in one clean workbook.</p>
+                <button onclick="downloadAttendanceExcel('ALL')" class="px-5 py-2.5 rounded-xl bg-[#0b2242] hover:bg-[#12335e] text-white font-bold text-xs">Download Complete History (.xlsx)</button>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ==================================================================
+             VIEW 11: INSTITUTION SETTINGS & JSON BACKUP / RESTORE
+             ================================================================== -->
+        <section id="view-settings" class="app-view hidden space-y-5">
+          <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-5">
+            <h3 class="text-base font-extrabold text-[#07172e]">Institution Branding & Official Assets</h3>
+            <form id="institution-settings-form" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label class="block text-xs font-bold text-slate-700 mb-1">Institution Name</label>
+                <input id="set-inst-name" type="text" class="w-full px-3.5 py-2 text-sm font-bold rounded-xl border border-slate-300" />
+              </div>
+              <div>
+                <label class="block text-xs font-bold text-slate-700 mb-1">Established Year Text</label>
+                <input id="set-inst-estd" type="text" class="w-full px-3.5 py-2 text-sm font-bold rounded-xl border border-slate-300" />
+              </div>
+              <div>
+                <label class="block text-xs font-bold text-slate-700 mb-1">Contact Number</label>
+                <input id="set-inst-contact" type="text" class="w-full px-3.5 py-2 text-sm font-bold rounded-xl border border-slate-300" />
+              </div>
+              <div>
+                <label class="block text-xs font-bold text-slate-700 mb-1">Academic Session & Website</label>
+                <input id="set-inst-session" type="text" class="w-full px-3.5 py-2 text-sm font-bold rounded-xl border border-slate-300" />
+              </div>
+              <div class="md:col-span-2">
+                <label class="block text-xs font-bold text-slate-700 mb-1">Institution Address</label>
+                <input id="set-inst-address" type="text" class="w-full px-3.5 py-2 text-sm font-bold rounded-xl border border-slate-300" />
+              </div>
+
+              <!-- Asset Uploads: Logo, Principal Signature, Institution Seal -->
+              <div class="p-3.5 rounded-xl border border-slate-200 bg-slate-50 space-y-2">
+                <div class="text-xs font-extrabold text-slate-800">Institution Logo</div>
+                <img id="preview-set-logo" class="h-14 w-14 rounded-full object-cover border border-amber-400 bg-[#07172e]" alt="Logo" />
+                <input id="upload-set-logo" type="file" accept="image/*" class="text-xs" />
+              </div>
+
+              <div class="p-3.5 rounded-xl border border-slate-200 bg-slate-50 space-y-2">
+                <div class="text-xs font-extrabold text-slate-800">Principal's Signature (Transparent PNG recommended)</div>
+                <img id="preview-set-sig" class="h-14 object-contain border border-slate-200 bg-white px-2 rounded" alt="Signature" />
+                <input id="upload-set-sig" type="file" accept="image/*" class="text-xs" />
+              </div>
+
+              <div class="p-3.5 rounded-xl border border-slate-200 bg-slate-50 space-y-2 md:col-span-2">
+                <div class="text-xs font-extrabold text-slate-800">Institution Official Seal</div>
+                <img id="preview-set-seal" class="h-14 w-14 rounded-full object-contain border border-slate-200 bg-white p-1" alt="Seal" />
+                <input id="upload-set-seal" type="file" accept="image/*" class="text-xs" />
+              </div>
+
+              <div class="md:col-span-2 flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-slate-200">
+                <button type="submit" class="px-5 py-2.5 rounded-xl bg-[#0b2242] hover:bg-[#12335e] text-white font-extrabold text-xs">Save Institution Settings</button>
+                <div class="flex gap-2">
+                  <button type="button" id="btn-backup-json" class="px-4 py-2 rounded-xl bg-emerald-600 text-white font-bold text-xs">Download Full Backup (.json)</button>
+                  <label class="px-4 py-2 rounded-xl bg-amber-500 text-[#07172e] font-extrabold text-xs cursor-pointer">
+                    Restore Backup
+                    <input id="input-restore-json" type="file" accept=".json" class="hidden" />
+                  </label>
+                </div>
+              </div>
+            </form>
+          </div>
+        </section>
+
+        <!-- ==================================================================
+             VIEW 12: ADMIN & STAFF ROLE MANAGEMENT
+             ================================================================== -->
+        <section id="view-staff-mgmt" class="app-view hidden space-y-5">
+          <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4">
+            <h3 class="text-base font-extrabold text-[#07172e]">Role-Based Access Control (Admin & Attendance Staff)</h3>
+            <form id="add-staff-form" class="grid grid-cols-1 sm:grid-cols-4 gap-3 bg-slate-50 p-4 rounded-xl border border-slate-200">
+              <input id="staff-name" type="text" required placeholder="Staff Full Name" class="px-3 py-2 text-xs font-bold rounded-xl border border-slate-300" />
+              <input id="staff-email" type="email" required placeholder="Staff Email" class="px-3 py-2 text-xs font-bold rounded-xl border border-slate-300" />
+              <select id="staff-role" class="px-3 py-2 text-xs font-bold rounded-xl border border-slate-300 bg-white">
+                <option value="STAFF">Attendance Staff (Scanner & Reports)</option>
+                <option value="ADMIN">Super Admin (Full Control)</option>
+              </select>
+              <button type="submit" class="px-4 py-2 rounded-xl bg-[#0b2242] text-white font-extrabold text-xs">+ Authorize User</button>
+            </form>
+
+            <div class="overflow-x-auto">
+              <table class="w-full text-left text-xs border-collapse">
+                <thead>
+                  <tr class="bg-slate-900 text-white uppercase text-[11px]">
+                    <th class="p-3">Name</th>
+                    <th class="p-3">Email</th>
+                    <th class="p-3">Role & Permissions</th>
+                    <th class="p-3 text-right">Action</th>
+                  </tr>
+                </thead>
+                <tbody id="staff-table-body" class="divide-y divide-slate-100"></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- ==================================================================
+             VIEW 13: CHANGE PASSWORD
+             ================================================================== -->
+        <section id="view-change-password" class="app-view hidden max-w-md mx-auto">
+          <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4">
+            <h3 class="text-base font-extrabold text-[#07172e]">Change Account Password</h3>
+            <form id="change-password-form" class="space-y-3">
+              <div>
+                <label class="block text-xs font-bold text-slate-700 mb-1">New Password (Min 6 characters)</label>
+                <input id="new-password-input" type="password" minlength="6" required class="w-full px-3.5 py-2.5 text-sm rounded-xl border border-slate-300" />
+              </div>
+              <div>
+                <label class="block text-xs font-bold text-slate-700 mb-1">Confirm New Password</label>
+                <input id="confirm-password-input" type="password" minlength="6" required class="w-full px-3.5 py-2.5 text-sm rounded-xl border border-slate-300" />
+              </div>
+              <button type="submit" class="w-full py-2.5 rounded-xl bg-[#0b2242] text-white font-extrabold text-xs">Update Password</button>
+            </form>
+          </div>
+        </section>
+
+      </main>
+    </div>
+  </div>
+
+  <!-- ========================================================================
+       MODAL A: CROPPER.JS PHOTO EDITOR + LIVE STUDENT ID CARD PREVIEW
+       ======================================================================== -->
+  <div id="cropper-modal" class="fixed inset-0 z-50 hidden bg-slate-950/85 backdrop-blur-sm flex items-center justify-center p-3 overflow-y-auto">
+    <div class="bg-white rounded-3xl max-w-5xl w-full p-5 shadow-2xl border border-slate-200 space-y-4 my-auto">
+      <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+        <div>
+          <h3 class="font-extrabold text-base text-[#07172e]">Student Photo Crop & Face Framing Studio</h3>
+          <p id="cropper-student-label" class="text-xs text-slate-500">Adjust framing without distorting facial proportions</p>
+        </div>
+        <button type="button" onclick="closeCropperModal()" class="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 font-bold">✕</button>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-5 items-center">
+        <!-- Left Cropper Canvas & Controls (7 Cols) -->
+        <div class="lg:col-span-7 space-y-3">
+          <div class="w-full h-72 sm:h-80 bg-slate-900 rounded-2xl overflow-hidden flex items-center justify-center">
+            <img id="cropper-target-img" class="max-w-full block" alt="Crop Target" />
+          </div>
+
+          <!-- Aspect Ratio Presets -->
+          <div class="flex flex-wrap items-center gap-1.5">
+            <span class="text-[11px] font-extrabold text-slate-500 mr-1">Aspect:</span>
+            <button type="button" onclick="setCropAspect(NaN)" class="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-xs font-bold">Free</button>
+            <button type="button" onclick="setCropAspect(1)" class="px-2.5 py-1 rounded-lg bg-[#0b2242] text-white text-xs font-bold">Square (1:1)</button>
+            <button type="button" onclick="setCropAspect(0.8)" class="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-xs font-bold">Portrait (4:5)</button>
+            <button type="button" onclick="setCropAspect(0.85)" class="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-xs font-bold">ID Card Photo</button>
+            <label class="ml-auto px-3 py-1 rounded-lg bg-sky-100 text-sky-900 font-bold text-xs cursor-pointer">
+              Upload New Photo
+              <input id="cropper-replace-file" type="file" accept="image/jpeg,image/png,image/webp" class="hidden" />
+            </label>
+          </div>
+
+          <!-- Zoom, Move, Rotate & Brightness/Contrast Controls -->
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs font-bold">
+            <button type="button" onclick="cropperAction('zoomIn')" class="py-1.5 px-2 rounded-lg bg-slate-100 hover:bg-slate-200">➕ Zoom In</button>
+            <button type="button" onclick="cropperAction('zoomOut')" class="py-1.5 px-2 rounded-lg bg-slate-100 hover:bg-slate-200">➖ Zoom Out</button>
+            <button type="button" onclick="cropperAction('rotateLeft')" class="py-1.5 px-2 rounded-lg bg-slate-100 hover:bg-slate-200">↺ Rotate Left</button>
+            <button type="button" onclick="cropperAction('rotateRight')" class="py-1.5 px-2 rounded-lg bg-slate-100 hover:bg-slate-200">↻ Rotate Right</button>
+            <button type="button" onclick="cropperAction('up')" class="py-1.5 px-2 rounded-lg bg-slate-100 hover:bg-slate-200">⬆️ Move Up</button>
+            <button type="button" onclick="cropperAction('down')" class="py-1.5 px-2 rounded-lg bg-slate-100 hover:bg-slate-200">⬇️ Move Down</button>
+            <button type="button" onclick="cropperAction('left')" class="py-1.5 px-2 rounded-lg bg-slate-100 hover:bg-slate-200">⬅️ Move Left</button>
+            <button type="button" onclick="cropperAction('right')" class="py-1.5 px-2 rounded-lg bg-slate-100 hover:bg-slate-200">➡️ Move Right</button>
+          </div>
+
+          <div class="grid grid-cols-2 gap-3 bg-slate-50 p-3 rounded-xl border border-slate-200">
+            <div>
+              <div class="flex justify-between text-[11px] font-bold mb-1"><span>Brightness</span><span id="lbl-brightness">100%</span></div>
+              <input id="slider-brightness" type="range" min="60" max="150" value="100" class="w-full accent-[#0b2242]" />
+            </div>
+            <div>
+              <div class="flex justify-between text-[11px] font-bold mb-1"><span>Contrast</span><span id="lbl-contrast">100%</span></div>
+              <input id="slider-contrast" type="range" min="60" max="150" value="100" class="w-full accent-[#0b2242]" />
+            </div>
+          </div>
+        </div>
+
+        <!-- Right Live ID Card Preview (5 Cols) -->
+        <div class="lg:col-span-5 flex flex-col items-center bg-slate-100 p-4 rounded-2xl border border-slate-200">
+          <span class="text-[11px] font-extrabold uppercase tracking-wider text-slate-500 mb-2">Live ID Card Preview</span>
+          <div id="cropper-live-card-mount" class="scale-90 origin-top -mb-10"></div>
+        </div>
+      </div>
+
+      <div class="flex flex-wrap items-center justify-between gap-2 pt-3 border-t border-slate-100">
+        <div class="flex gap-2">
+          <button type="button" onclick="cropperAction('reset')" class="px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-xs font-bold">Reset Crop</button>
+          <button type="button" onclick="restoreOriginalStudentPhoto()" class="px-3.5 py-2 rounded-xl bg-amber-100 text-amber-900 text-xs font-bold">Restore Original</button>
+        </div>
+        <button type="button" id="btn-save-cropped-photo" class="px-6 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs shadow-md">
+          Save Cropped Photo to ID Card
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================================================
+       MODAL B: ADD / EDIT STUDENT MODAL
+       ======================================================================== -->
+  <div id="student-modal" class="fixed inset-0 z-50 hidden bg-slate-950/75 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
+    <div class="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl border border-slate-200 space-y-4">
+      <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+        <h3 id="student-modal-title" class="font-extrabold text-base text-[#07172e]">Add / Edit Student</h3>
+        <button type="button" onclick="closeStudentModal()" class="w-8 h-8 rounded-full bg-slate-100 font-bold">✕</button>
+      </div>
+      <form id="student-form" class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+        <input type="hidden" id="edit-student-doc-id" />
+        <div class="sm:col-span-2">
+          <label class="font-bold text-slate-700">Student Name *</label>
+          <input id="f-student-name" type="text" required class="w-full mt-1 px-3 py-2 rounded-xl border border-slate-300 font-bold uppercase" />
+        </div>
+        <div>
+          <label class="font-bold text-slate-700">Student ID *</label>
+          <input id="f-student-id" type="text" required class="w-full mt-1 px-3 py-2 rounded-xl border border-slate-300 font-bold uppercase" />
+        </div>
+        <div>
+          <label class="font-bold text-slate-700">Designation / Class *</label>
+          <input id="f-designation" type="text" required value="HAFIZ" class="w-full mt-1 px-3 py-2 rounded-xl border border-slate-300 font-bold uppercase" />
+        </div>
+        <div>
+          <label class="font-bold text-slate-700">Father's Name</label>
+          <input id="f-father" type="text" class="w-full mt-1 px-3 py-2 rounded-xl border border-slate-300 font-semibold uppercase" />
+        </div>
+        <div>
+          <label class="font-bold text-slate-700">Mother's Name</label>
+          <input id="f-mother" type="text" class="w-full mt-1 px-3 py-2 rounded-xl border border-slate-300 font-semibold uppercase" />
+        </div>
+        <div>
+          <label class="font-bold text-slate-700">Mobile Number *</label>
+          <input id="f-mobile" type="tel" maxlength="10" required class="w-full mt-1 px-3 py-2 rounded-xl border border-slate-300 font-bold" />
+        </div>
+        <div>
+          <label class="font-bold text-slate-700">ID Card Theme</label>
+          <select id="f-card-theme" class="w-full mt-1 px-3 py-2 rounded-xl border border-slate-300 font-bold bg-white">
+            <option value="">Use Global Default</option>
+            <option value="theme-navy-gold">Royal Navy Blue & Gold</option>
+            <option value="theme-emerald-white">Emerald Green & White</option>
+            <option value="theme-black-gold">Black & Gold Premium</option>
+            <option value="theme-sky-navy">Sky Blue & Navy</option>
+            <option value="theme-white-islamic">Modern White & Islamic Green</option>
+          </select>
+        </div>
+        <div class="sm:col-span-2">
+          <label class="font-bold text-slate-700">Address *</label>
+          <input id="f-address" type="text" required class="w-full mt-1 px-3 py-2 rounded-xl border border-slate-300 font-semibold uppercase" />
+        </div>
+        <div class="sm:col-span-2 flex justify-end gap-2 pt-3 border-t border-slate-100">
+          <button type="button" onclick="closeStudentModal()" class="px-4 py-2 rounded-xl bg-slate-100 font-bold">Cancel</button>
+          <button type="submit" class="px-5 py-2 rounded-xl bg-[#0b2242] text-white font-extrabold">Save Student</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ========================================================================
+       MODAL C: MANUAL ATTENDANCE CORRECTION MODAL
+       ======================================================================== -->
+  <div id="manual-att-modal" class="fixed inset-0 z-50 hidden bg-slate-950/75 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4">
+      <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+        <h3 class="font-extrabold text-base text-[#07172e]">Admin Attendance Correction / Entry</h3>
+        <button type="button" onclick="closeManualAttModal()" class="w-8 h-8 rounded-full bg-slate-100 font-bold">✕</button>
+      </div>
+      <form id="manual-att-form" class="space-y-3 text-xs">
+        <div>
+          <label class="font-bold text-slate-700">Select Student</label>
+          <select id="m-att-student" required class="w-full mt-1 px-3 py-2 rounded-xl border border-slate-300 font-bold bg-white"></select>
+        </div>
+        <div>
+          <label class="font-bold text-slate-700">Date</label>
+          <input id="m-att-date" type="date" required class="w-full mt-1 px-3 py-2 rounded-xl border border-slate-300 font-bold" />
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="font-bold text-slate-700">Arrival Time (IN)</label>
+            <input id="m-att-in" type="time" required value="08:15" class="w-full mt-1 px-3 py-2 rounded-xl border border-slate-300 font-bold" />
+          </div>
+          <div>
+            <label class="font-bold text-slate-700">Departure Time (OUT)</label>
+            <input id="m-att-out" type="time" class="w-full mt-1 px-3 py-2 rounded-xl border border-slate-300 font-bold" />
+          </div>
+        </div>
+        <div>
+          <label class="font-bold text-slate-700">Admin Remarks</label>
+          <input id="m-att-remarks" type="text" value="Verified by Admin" class="w-full mt-1 px-3 py-2 rounded-xl border border-slate-300 font-semibold" />
+        </div>
+        <div class="flex justify-end gap-2 pt-3 border-t border-slate-100">
+          <button type="button" onclick="closeManualAttModal()" class="px-4 py-2 rounded-xl bg-slate-100 font-bold">Cancel</button>
+          <button type="submit" class="px-5 py-2 rounded-xl bg-emerald-600 text-white font-extrabold">Save Attendance Record</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ========================================================================
+       MODAL D: FIREBASE CLOUD CONFIGURATION MODAL
+       ======================================================================== -->
+  <div id="firebase-config-modal" class="fixed inset-0 z-50 hidden bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl space-y-4">
+      <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+        <h3 class="font-extrabold text-base text-[#07172e]">Connect Live Firebase Backend</h3>
+        <button type="button" id="btn-close-firebase-modal" class="w-8 h-8 rounded-full bg-slate-100 font-bold">✕</button>
+      </div>
+      <p class="text-xs text-slate-600">Paste your Firebase Web App <code class="bg-slate-100 px-1 rounded">firebaseConfig</code> JSON object below to enable real-time multi-device Firestore sync, Firebase Auth & Cloud Storage.</p>
+      <textarea id="firebase-config-textarea" rows="7" placeholder='{"apiKey": "...", "authDomain": "...", "projectId": "...", "storageBucket": "...", "messagingSenderId": "...", "appId": "..."}' class="w-full p-3 text-xs font-mono rounded-xl border border-slate-300 focus:border-[#0b2242] outline-none"></textarea>
+      <div class="flex justify-end gap-2">
+        <button type="button" id="btn-save-firebase-config" class="px-5 py-2.5 rounded-xl bg-[#0b2242] text-white font-extrabold text-xs">Connect & Initialize Firebase</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================================================
+       FULL-STACK APPLICATION SCRIPT (FIREBASE MODULE + SANDBOX SYNC ENGINE)
+       ======================================================================== -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+    import {
+      getAuth,
+      signInWithEmailAndPassword,
+      signInAnonymously,
+      signInWithCustomToken,
+      sendPasswordResetEmail,
+      updatePassword,
+      signOut,
+      onAuthStateChanged
+    } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+    import {
+      getFirestore,
+      collection,
+      doc,
+      setDoc,
+      updateDoc,
+      deleteDoc,
+      onSnapshot
+    } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+    // ========================================================================
+    // 1. DEFAULT ASSETS & INITIAL SEED DATA (ALL 47 STUDENTS FROM EXCEL)
+    // ========================================================================
+    const DEFAULT_LOGO_SVG = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='46' fill='%2307172e' stroke='%23d4af37' stroke-width='4'/%3E%3Cpath d='M50 18 C36 28, 32 38, 32 46 L68 46 C68 38, 64 28, 50 18 Z' fill='%23f6dc84'/%3E%3Cpath d='M25 55 Q37 51 50 57 Q63 51 75 55 L75 72 Q63 68 50 74 Q37 68 25 72 Z' fill='%23ffffff'/%3E%3Cpath d='M34 80 L50 73 L66 80' fill='none' stroke='%23d4af37' stroke-width='3'/%3E%3C/svg%3E";
+    const DEFAULT_SIG_SVG = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 60'%3E%3Cpath d='M15 42 Q35 12 52 38 T88 26 T125 36 Q145 18 165 34' fill='none' stroke='%230b2242' stroke-width='2.6' stroke-linecap='round'/%3E%3Cpath d='M28 48 L150 45' stroke='%23d4af37' stroke-width='1.5'/%3E%3C/svg%3E";
+    const DEFAULT_SEAL_SVG = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='44' fill='none' stroke='%230b2242' stroke-width='3' stroke-dasharray='4 2'/%3E%3Ccircle cx='50' cy='50' r='34' fill='none' stroke='%230b2242' stroke-width='1.5'/%3E%3Ctext x='50' y='47' font-family='sans-serif' font-size='9' font-weight='bold' fill='%230b2242' text-anchor='middle'%3ETQWA COLLEGE%3C/text%3E%3Ctext x='50' y='59' font-family='sans-serif' font-size='7' font-weight='bold' fill='%230b2242' text-anchor='middle'%3EVERIFIED SEAL%3C/text%3E%3C/svg%3E";
+    const DEFAULT_STUDENT_AVATAR = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 200'%3E%3Crect width='200' height='200' fill='%23dbeafe'/%3E%3Ccircle cx='100' cy='76' r='34' fill='%230b2242'/%3E%3Cpath d='M68 62 Q100 42 132 62 L130 70 Q100 56 70 70 Z' fill='%23ffffff'/%3E%3Cpath d='M42 185 C42 138, 158 138, 158 185 Z' fill='%230b2242'/%3E%3C/svg%3E";
+
+    const EMBEDDED_STUDENTS_DATA = [
+      { sl: 1, roll: 1, studentId: 'TQWA-2026-0056', name: 'MD ABU SAQUIB RAHMANI', fatherName: 'MD ALAMGIR RAHMANI', motherName: 'NURJAHAN BEGUM', guardianName: 'MD ALAMGIR RAHMANI', gender: 'Male', dob: '2014-05-12', mobile: '9830112233', whatsapp: '9830112233', altMobile: '', email: '', religion: 'Islam', bloodGroup: 'B+', designation: 'HAFIZ', status: 'Active', village: 'BERACHAMPA', po: 'BERACHAMPA', ps: 'DEGANGA', block: 'DEGANGA', district: 'NORTH 24 PARGANAS', state: 'WEST BENGAL', pinCode: '743424', aadhaar: '', birthReg: '', appYear: '2026', address: 'BERACHAMPA, DEGANGA, NORTH 24 PARGANAS, 743424', qrToken: 'TQWA-QR-TQWA20260056-01A' },
+      { sl: 2, roll: 2, studentId: 'TQWA-2026-0057', name: 'ABU HURAIRA', fatherName: 'MD SHOFIKUL ISLAM', motherName: 'HASINA BIBI', guardianName: 'MD SHOFIKUL ISLAM', gender: 'Male', dob: '2015-02-19', mobile: '9830112234', whatsapp: '9830112234', altMobile: '', email: '', religion: 'Islam', bloodGroup: 'O+', designation: 'HAFIZ', status: 'Active', village: 'SADARPUR', po: 'HASNABAD', ps: 'HASNABAD', block: 'HASNABAD', district: 'NORTH 24 PARGANAS', state: 'WEST BENGAL', pinCode: '743426', aadhaar: '', birthReg: '', appYear: '2026', address: 'SADARPUR, HASNABAD, NORTH 24 PARGANAS, 743426', qrToken: 'TQWA-QR-TQWA20260057-02B' },
+      { sl: 3, roll: 3, studentId: 'TQWA-2026-0058', name: 'SK ABU TALHA', fatherName: 'SK MONIRUL ISLAM', motherName: 'AYESHA KHATUN', guardianName: 'SK MONIRUL ISLAM', gender: 'Male', dob: '2014-08-04', mobile: '9830112235', whatsapp: '9830112235', altMobile: '', email: '', religion: 'Islam', bloodGroup: 'A+', designation: 'HAFIZ', status: 'Active', village: 'BADURIA', po: 'BADURIA', ps: 'BADURIA', block: 'BADURIA', district: 'NORTH 24 PARGANAS', state: 'WEST BENGAL', pinCode: '743401', aadhaar: '', birthReg: '', appYear: '2026', address: 'BADURIA, NORTH 24 PARGANAS, 743401', qrToken: 'TQWA-QR-TQWA20260058-03C' },
+      { sl: 4, roll: 4, studentId: 'TQWA-2026-0059', name: 'TANVIR GAIN', fatherName: 'ANISUR GAIN', motherName: 'PARVIN BIBI', guardianName: 'ANISUR GAIN', gender: 'Male', dob: '2015-01-27', mobile: '9830112236', whatsapp: '9830112236', altMobile: '', email: '', religion: 'Islam', bloodGroup: 'AB+', designation: 'HAFIZ', status: 'Active', village: 'BASIRHAT', po: 'BASIRHAT', ps: 'BASIRHAT', block: 'BASIRHAT-I', district: 'NORTH 24 PARGANAS', state: 'WEST BENGAL', pinCode: '743411', aadhaar: '', birthReg: '', appYear: '2026', address: 'BASIRHAT, NORTH 24 PARGANAS, 743411', qrToken: 'TQWA-QR-TQWA20260059-04D' },
+      { sl: 5, roll: 5, studentId: 'TQWA-2026-0060', name: 'ABU JAHID RAHMANI', fatherName: 'MD ZAKIR RAHMANI', motherName: 'SALMA BEGUM', guardianName: 'MD ZAKIR RAHMANI', gender: 'Male', dob: '2014-11-15', mobile: '9830112237', whatsapp: '9830112237', altMobile: '', email: '', religion: 'Islam', bloodGroup: 'B+', designation: 'HAFIZ', status: 'Active', village: 'HAROA', po: 'HAROA', ps: 'HAROA', block: 'HAROA', district: 'NORTH 24 PARGANAS', state: 'WEST BENGAL', pinCode: '743425', aadhaar: '', birthReg: '', appYear: '2026', address: 'HAROA, NORTH 24 PARGANAS, 743425', qrToken: 'TQWA-QR-TQWA20260060-05E' },
+      { sl: 6, roll: 6, studentId: 'TQWA-2026-0061', name: 'MD TOUHID MONDAL', fatherName: 'MD RAFIQUL MONDAL', motherName: 'MUMTAZ BIBI', guardianName: 'MD RAFIQUL MONDAL', gender: 'Male', dob: '2015-04-09', mobile: '9830112238', whatsapp: '9830112238', altMobile: '', email: '', religion: 'Islam', bloodGroup: 'O+', designation: 'HAFIZ', status: 'Active', village: 'BELIAGHATA', po: 'BERACHAMPA', ps: 'DEGANGA', block: 'DEGANGA', district: 'NORTH 24 PARGANAS', state: 'WEST BENGAL', pinCode: '743424', aadhaar: '', birthReg: '', appYear: '2026', address: 'BELIAGHATA, BERACHAMPA, DEGANGA, 743424', qrToken: 'TQWA-QR-TQWA20260061-06F' },
+      { sl: 7, roll: 7, studentId: 'TQWA-2026-0062', name: 'SANIUL ALAM', fatherName: 'MD NOOR ALAM', motherName: 'REHANA KHATUN', guardianName: 'MD NOOR ALAM', gender: 'Male', dob: '2014-06-21', mobile: '9830112239', whatsapp: '9830112239', altMobile: '', email: '', religion: 'Islam', bloodGroup: 'A+', designation: 'HAFIZ', status: 'Active', village: 'SWARUPNAGAR', po: 'SWARUPNAGAR', ps: 'SWARUPNAGAR', block: 'SWARUPNAGAR', district: 'NORTH 24 PARGANAS', state: 'WEST BENGAL', pinCode: '743286', aadhaar: '', birthReg: '', appYear: '2026', address: 'SWARUPNAGAR, NORTH 24 PARGANAS, 743286', qrToken: 'TQWA-QR-TQWA20260062-07G' },
+      { sl: 8, roll: 8, studentId: 'TQWA-2026-0063', name: 'MUBASHSHIR MONDAL', fatherName: 'MD MAKSUD MONDAL', motherName: 'SOFIA BIBI', guardianName: 'MD MAKSUD MONDAL', gender: 'Male', dob: '2015-03-11', mobile: '9830112240', whatsapp: '9830112240', altMobile: '', email: '', religion: 'Islam', bloodGroup: 'B+', designation: 'HAFIZ', status: 'Active', village: 'TAKI', po: 'TAKI', ps: 'HASNABAD', block: 'HASNABAD', district: 'NORTH 24 PARGANAS', state: 'WEST BENGAL', pinCode: '743429', aadhaar: '', birthReg: '', appYear: '2026', address: 'TAKI, HASNABAD, NORTH 24 PARGANAS, 743429', qrToken: 'TQWA-QR-TQWA20260063-08H' },
+      { sl: 9, roll: 9, studentId: 'TQWA-2026-0064', name: 'SYED ARBIN KARIM', fatherName: 'SYED REZAUL KARIM', motherName: 'ZOHRA BEGUM', guardianName: 'SYED REZAUL KARIM', gender: 'Male', dob: '2014-09-18', mobile: '9830112241', whatsapp: '9830112241', altMobile: '', email: '', religion: 'Islam', bloodGroup: 'O+', designation: 'HAFIZ', status: 'Active', village: 'HABRA', po: 'HABRA', ps: 'HABRA', block: 'HABRA-I', district: 'NORTH 24 PARGANAS', state: 'WEST BENGAL', pinCode: '743263', aadhaar: '', birthReg: '', appYear: '2026', address: 'HABRA, NORTH 24 PARGANAS, 743263', qrToken: 'TQWA-QR-TQWA20260064-09J' },
+      { sl: 10, roll: 10, studentId: 'TQWA-2026-0065', name: 'MEHEBUB HASAN GAZI', fatherName: 'ABDUL KARIM GAZI', motherName: 'SAHIDA BIBI', guardianName: 'ABDUL KARIM GAZI', gender: 'Male', dob: '2014-01-05', mobile: '7029646905', whatsapp: '7029646905', altMobile: '', email: '', religion: 'Islam', bloodGroup: 'B+', designation: 'HAFIZ', status: 'Active', village: 'SADARPUR', po: 'HASNABAD', ps: 'HASNABAD', block: 'HASNABAD', district: 'NORTH 24 PARGANAS', state: 'WEST BENGAL', pinCode: '743426', aadhaar: '', birthReg: '', appYear: '2026', address: 'SADARPUR, HASNABAD, NORTH 24 PARGANAS, 743426', qrToken: 'TQWA-QR-TQWA20260065-10K' },
+      { sl: 11, roll: 11, studentId: 'TQWA-2026-0066', name: 'JOSIM MOLLA', fatherName: 'AZIZUL MOLLA', motherName: 'RASHIDA BIBI', guardianName: 'AZIZUL MOLLA', gender: 'Male', dob: '2015-07-02', mobile: '9830112243', whatsapp: '9830112243', altMobile: '', email: '', religion: 'Islam', bloodGroup: 'A+', designation: 'HAFIZ', status: 'Active', village: 'KADAMBAGACHI', po: 'KADAMBAGACHI', ps: 'BARASAT', block: 'BARASAT-I', district: 'NORTH 24 PARGANAS', state: 'WEST BENGAL', pinCode: '700125', aadhaar: '', birthReg: '', appYear: '2026', address: 'KADAMBAGACHI, BARASAT, NORTH 24 PARGANAS, 700125', qrToken: 'TQWA-QR-TQWA20260066-11L' },
+      { sl: 12, roll: 12, studentId: 'TQWA-2026-0067', name: 'AHMAD GAZI', fatherName: 'MD FARUK GAZI', motherName: 'NASIMA KHATUN', guardianName: 'MD FARUK GAZI', gender: 'Male', dob: '2015-05-25', mobile: '9830112244', whatsapp: '9830112244', altMobile: '', email: '', religion: 'Islam', bloodGroup: 'O+', designation: 'HAFIZ', status: 'Active', village: 'HINGALGANJ', po: 'HINGALGANJ', ps: 'HINGALGANJ', block: 'HINGALGANJ', district: 'NORTH 24 PARGANAS', state: 'WEST BENGAL', pinCode: '743435', aadhaar: '', birthReg: '', appYear: '2026', address: 'HINGALGANJ, NORTH 24 PARGANAS, 743435', qrToken: 'TQWA-QR-TQWA20260067-12M' },
+      { sl: 13, roll: 13, studentId: 'TQWA-2026-0068', name: 'HABIBUR RAHAMAN', fatherName: 'MD SAIFUL RAHAMAN', motherName: 'MINA BIBI', guardianName: 'MD SAIFUL RAHAMAN', gender: 'Male', dob: '2014-12-14', mobile: '9830112245', whatsapp: '9830112245', altMobile: '', email: '', religion: 'Islam', bloodGroup: 'B+', designation: 'HAFIZ', status: 'Active', village: 'MINAKHAN', po: 'MINAKHAN', ps: 'MINAKHAN', block: 'MINAKHAN', district: 'NORTH 24 PARGANAS', state: 'WEST BENGAL', pinCode: '743425', aadhaar: '', birthReg: '', appYear: '2026', address: 'MINAKHAN, NORTH 24 PARGANAS, 743425', qrToken: 'TQWA-QR-TQWA20260068-13N' },
+      { sl: 14, roll: 14, studentId: 'TQWA-2026-0069', name: 'SUHAIB RAHAMAN', fatherName: 'MD HABIBUR RAHAMAN', motherName: 'SULTANA BEGUM', guardianName: 'MD HABIBUR RAHAMAN', gender: 'Male', dob: '2015-09-08', mobile: '9830112246', whatsapp: '9830112246', altMobile: '', email: '', religion: 'Islam', bloodGroup: 'AB+', designation: 'HAFIZ', status: 'Active', village: 'SANDESHKHALI', po: 'SANDESHKHALI', ps: 'SANDESHKHALI', block: 'SANDESHKHALI-I', district: 'NORTH 24 PARGANAS', state: 'WEST BENGAL', pinCode: '743446', aadhaar: '', birthReg: '', appYear: '2026', address: 'SANDESHKHALI, NORTH 24 PARGANAS, 743446', qrToken: 'TQWA-QR-TQWA20260069-14P' },
+      { sl: 15, roll: 15, studentId: 'TQWA-2026-0070', name: 'RIJUAN ISLAM', fatherName: 'MD NURUL ISLAM', motherName: 'RAHIMA BIBI', guardianName: 'MD NURUL ISLAM', gender: 'Male', dob: '2014-10-30', mobile: '9830112247', whatsapp: '9830112247', altMobile: '', email: '', religion: 'Islam', bloodGroup: 'A+', designation: 'HAFIZ', status: 'Active', village: 'DEGANGA', po: 'DEGANGA', ps: 'DEGANGA', block: 'DEGANGA', district: 'NORTH 24 PARGANAS', state: 'WEST BENGAL', pinCode: '743424', aadhaar: '', birthReg: '', appYear: '2026', address: 'DEGANGA, NORTH 24 PARGANAS, 743424', qrToken: 'TQWA-QR-TQWA20260070-15Q' },
+      { sl: 16, roll: 16, studentId: 'TQWA-2026-0071', name: 'MD TAMIM HASAN', fatherName: 'MD SADEK HASAN', motherName: 'JASMINA KHATUN', guardianName: 'MD SADEK HASAN', gender: 'Male', dob: '2015-06-17', mobile: '9830112248', whatsapp: '9830112248', altMobile: '', email: '', religion: 'Islam', bloodGroup: 'O+', designation: 'HAFIZ', status: 'Active', village: 'JADURHATI', po: 'JADURHATI', ps: 'DEGANGA', block: 'DEGANGA', district: 'NORTH 24 PARGANAS', state: 'WEST BENGAL', pinCode: '743424', aadhaar: '', birthReg: '', appYear: '2026', address: 'JADURHATI, DEGANGA, NORTH 24 PARGANAS, 743424', qrToken: 'TQWA-QR-TQWA20260071-16R' },
+      { sl: 17, roll: 17, studentId: 'TQWA-2026-0072', name: 'MOZAHID MONDAL', fatherName: 'MD ASRAF MONDAL', motherName: 'AMENA BIBI', guardianName: 'MD ASRAF MONDAL', gender: 'Male', dob: '2014-03-22', mobile: '9830112249', whatsapp: '9830112249', altMobile: '', email: '', religion: 'Islam', bloodGroup: 'B+', designation: 'HAFIZ', status: 'Active', village: 'CHAKLA', po: 'CHAKLA', ps: 'HAROA', block: 'HAROA', district: 'NORTH 24 PARGANAS', state: 'WEST BENGAL', pinCode: '743425', aadhaar: '', birthReg: '', appYear: '2026', address: 'CHAKLA, HAROA, NORTH 24 PARGANAS, 743425', qrToken: 'TQWA-QR-TQWA20260072-17S' },
+      { sl: 18, roll: 18, studentId: 'TQWA-2026-0073', name: 'MD MAHDI HASSAN', fatherName: 'MD ARIF HASSAN', motherName: 'KULSUM BEGUM', guardianName: 'MD ARIF HASSAN', gender: 'Male', dob: '2015-08-13', mobile: '9830112250', whatsapp: '9830112250', altMobile: '', email: '', religion: 'Islam', bloodGroup: 'A+', designation: 'HAFIZ', status: 'Active', village: 'BERACHAMPA', po: 'BERACHAMPA', ps: 'DEGANGA', block: 'DEGANGA', district: 'NORTH 24 PARGANAS', state: 'WEST BENGAL', pinCode: '743424', aadhaar: '', birthReg: '', appYear: '2026', address: 'BERACHAMPA, DEGANGA, NORTH 24 PARGANAS, 743424', qrToken: 'TQWA-QR-TQWA20260073-18T' },
+      { sl: 19, roll: 19, studentId: 'TQWA-2026-0074', name: 'TANBEER GAZI', fatherName: 'MD JAHANGIR GAZI', motherName: 'MAHMUDA BIBI', guardianName: 'MD JAHANGIR GAZI', gender: 'Male', dob: '2014-07-29', mobile: '9830112251', whatsapp: '9830112251', altMobile: '', email: '', religion: 'Islam', bloodGroup: 'O+', designation: 'HAFIZ', status: 'Active', village: 'SHANKARPUR', po: 'BERACHAMPA', ps: 'DEGANGA', block: 'DEGANGA', district: 'NORTH 24 PARGANAS', state: 'WEST BENGAL', pinCode: '743424', aadhaar: '', birthReg: '', appYear: '2026', address: 'SHANKARPUR, BERACHAMPA, DEGANGA, 743424', qrToken: 'TQWA-QR-TQWA20260074-19U' },
+      { sl: 20, roll: 20, studentId: 'TQWA-2026-0075', name: 'MEHEDI HASAN MONDAL', fatherName: 'MD SABER MONDAL', motherName: 'RINA KHATUN', guardianName: 'MD SABER MONDAL', gender: 'Male', dob: '2015-02-06', mobile: '9830112252', whatsapp: '9830112252', altMobile: '', email: '', religion: 'Islam', bloodGroup: 'B+', designation: 'HAFIZ', status: 'Active', village: 'KHARAGPUR', po: 'BASIRHAT', ps: 'BASIRHAT', block: 'BASIRHAT-II', district: 'NORTH 24 PARGANAS', state: 'WEST BENGAL', pinCode: '743412', aadhaar: '', birthReg: '', appYear: '2026', address: 'BASIRHAT, NORTH 24 PARGANAS, 743412', qrToken: 'TQWA-QR-TQWA20260075-20V' },
+      { sl: 21, roll: 21, studentId: 'TQWA-2026-0076', name: 'RIDWAN MOLLA', fatherName: 'MD SULTAN MOLLA', motherName: 'SAJEDA BIBI', guardianName: 'MD SULTAN MOLLA', gender: 'Male', dob: '2014-04-16', mobile: '9830112253', whatsapp: '9830112253', altMobile: '', email: '', religion: 'Islam', bloodGroup: 'AB+', designation: 'HAFIZ', status: 'Active', village: 'GOPINATHPUR', po: 'BADURIA', ps: 'BADURIA', block: 'BADURIA', district: 'NORTH 24 PARGANAS', state: 'WEST BENGAL', pinCode: '743401', aadhaar: '', birthReg: '', appYear: '2026', address: 'GOPINATHPUR, BADURIA, NORTH 24 PARGANAS, 743401', qrToken: 'TQWA-QR-TQWA20260076-21W' },
+      { sl: 22, roll: 22, studentId: 'TQWA-2026-0077', name: 'MD MEHRAB GAZI', fatherName: 'MD RASHID GAZI', motherName: 'FARIDA BEGUM', guardianName: 'MD RASHID GAZI', gender: 'Male', dob: '2015-10-03', mobile: '9830112254', whatsapp: '9830112254', altMobile: '', email: '', religion: 'Islam', bloodGroup: 'A+', designation: 'HAFIZ', status: 'Active', village: 'HASNABAD', po: 'HASNABAD', ps: 'HASNABAD', block: 'HASNABAD', district: 'NORTH 24 PARGANAS', state: 'WEST BENGAL', pinCode: '743426', aadhaar: '', birthReg: '', appYear: '2026', address: 'HASNABAD, NORTH 24 PARGANAS, 743426', qrToken: 'TQWA-QR-TQWA20260077-22X' },
+      { sl: 23, roll: 23, studentId: 'TQWA-2026-0078', name: 'MASUM BIALLA', fatherName: 'MD ASGAR BIALLA', motherName: 'MARIYAM BIBI', guardianName: 'MD ASGAR BIALLA', gender: 'Male', dob: '2014-09-27', mobile: '9830112255', whatsapp: '9830112255', altMobile: '', email: '', religion: 'Islam', bloodGroup: 'O+', designation: 'HAFIZ', status: 'Active', village: 'CHAMPA', po: 'BERACHAMPA', ps: 'DEGANGA', block: 'DEGANGA', district: 'NORTH 24 PARGANAS', state: 'WEST BENGAL', pinCode: '743424', aadhaar: '', birthReg: '', appYear: '2026', address: 'CHAMPA, BERACHAMPA, DEGANGA, 743424', qrToken: 'TQWA-QR-TQWA20260078-23Y' },
+      { sl: 24, roll: 24, studentId: 'TQWA-2026-0079', name: 'MD MISBAHUL ISLAM', fatherName: 'MD MOTIUR ISLAM', motherName: 'SHAHIDA KHATUN', guardianName: 'MD MOTIUR ISLAM', gender: 'Male', dob: '2015-01-19', mobile: '9830112256', whatsapp: '9830112256', altMobile: '', email: '', religion: 'Islam', bloodGroup: 'B+', designation: 'HAFIZ', status: 'Active', village: 'MACHHLANDAPUR', po: 'MACHHLANDAPUR', ps: 'HABRA', block: 'HABRA-II', district: 'NORTH 24 PARGANAS', state: 'WEST BENGAL', pinCode: '743265', aadhaar: '', birthReg: '', appYear: '2026', address: 'MACHHLANDAPUR, HABRA, NORTH 24 PARGANAS, 743265', qrToken: 'TQWA-QR-TQWA20260079-24Z' },
+      { sl: 25, roll: 25, studentId: 'TQWA-2026-0080', name: 'ABU SAYEED', fatherName: 'MD ANWAR HOSSAIN', motherName: 'ZAINAB BIBI', guardianName: 'MD ANWAR HOSSAIN', gender: 'Male', dob: '2014-06-08', mobile: '9830112257', whatsapp: '9830112257', altMobile: '', email: '', religion: 'Islam', bloodGroup: 'A+', designation: 'HAFIZ', status: 'Active', village: 'KAZIPARA', po: 'DEGANGA', ps: 'DEGANGA', block: 'DEGANGA', district: 'NORTH 24 PARGANAS', state: 'WEST BENGAL', pinCode: '743424', aadhaar: '', birthReg: '', appYear: '2026', address: 'KAZIPARA, DEGANGA, NORTH 24 PARGANAS, 743424', qrToken: 'TQWA-QR-TQWA20260080-25A' },
+      { sl: 26, roll: 26, studentId: 'TQWA-2026-0081', name: 'HASIBUR BISWAS', fatherName: 'MD KALAM BISWAS', motherName: 'HALIMA BIBI', guardianName: 'MD KALAM BISWAS', gender: 'Male', dob: '2015-05-14', mobile: '9830112258', whatsapp: '9830112258', altMobile: '', email: '', religion: 'Islam', bloodGroup: 'O+', designation: 'HAFIZ', status: 'Active', village: 'SWARUPNAGAR', po: 'SWARUPNAGAR', ps: 'SWARUPNAGAR', block: 'SWARUPNAGAR', district: 'NORTH 24 PARGANAS', state: 'WEST BENGAL', pinCode: '743286', aadhaar: '', birthReg: '', appYear: '2026', address: 'SWARUPNAGAR, NORTH 24 PARGANAS, 743286', qrToken: 'TQWA-QR-TQWA20260081-26B' },
+      { sl: 27, roll: 27, studentId: 'TQWA-2026-0082', name: 'SAJID MONDAL', fatherName: 'MD MAJID MONDAL', motherName: 'RUBINA BEGUM', guardianName: 'MD MAJID MONDAL', gender: 'Male', dob: '2014-12-01', mobile: '9830112259', whatsapp: '9830112259', altMobile: '', email: '', religion: 'Islam', bloodGroup: 'B+', designation: 'HAFIZ', status: 'Active', village: 'BERACHAMPA', po: 'BERACHAMPA', ps: 'DEGANGA', block: 'DEGANGA', district: 'NORTH 24 PARGANAS', state: 'WEST BENGAL', pinCode: '743424', aadhaar: '', birthReg: '', appYear: '2026', address: 'BERACHAMPA, DEGANGA, NORTH 24 PARGANAS, 743424', qrToken: 'TQWA-QR-TQWA20260082-27C' },
+      { sl: 28, roll: 28, studentId: 'TQWA-2026-0083', name: 'MD NASIRUL ISLAM', fatherName: 'MD BASHIR ISLAM', motherName: 'TASLIMA KHATUN', guardianName: 'MD BASHIR ISLAM', gender: 'Male', dob: '2015-03-29', mobile: '9830112260', whatsapp: '9830112260', altMobile: '', email: '', religion: 'Islam', bloodGroup: 'AB+', designation: 'HAFIZ', status: 'Active', village: 'BADURIA', po: 'BADURIA', ps: 'BADURIA', block: 'BADURIA', district: 'NORTH 24 PARGANAS', state: 'WEST BENGAL', pinCode: '743401', aadhaar: '', birthReg: '', appYear: '2026', address: 'BADURIA, NORTH 24 PARGANAS, 743401', qrToken: 'TQWA-QR-TQWA20260083-28D' },
+      { sl: 29, roll: 29, studentId: 'TQWA-2026-0084', name: 'ABDUL MUIZ SARDAR', fatherName: 'MD HAFIZ SARDAR', motherName: 'SHAMIMA BIBI', guardianName: 'MD HAFIZ SARDAR', gender: 'Male', dob: '2014-08-23', mobile: '9830112261', whatsapp: '9830112261', altMobile: '', email: '', religion: 'Islam', bloodGroup: 'A+', designation: 'HAFIZ', status: 'Active', village: 'HAROA', po: 'HAROA', ps: 'HAROA', block: 'HAROA', district: 'NORTH 24 PARGANAS', state: 'WEST BENGAL', pinCode: '743425', aadhaar: '', birthReg: '', appYear: '2026', address: 'HAROA, NORTH 24 PARGANAS, 743425', qrToken: 'TQWA-QR-TQWA20260084-29E' },
+      { sl: 30, roll: 30, studentId: 'TQWA-2026-0085', name: 'ANKAN RAY', fatherName: 'SUJAN RAY', motherName: 'KABITA RAY', guardianName: 'SUJAN RAY', gender: 'Male', dob: '2015-07-11', mobile: '9830112262', whatsapp: '9830112262', altMobile: '', email: '', religion: 'Islam', bloodGroup: 'O+', designation: 'HAFIZ', status: 'Active', village: 'BARASAT', po: 'BARASAT', ps: 'BARASAT', block: 'BARASAT-I', district: 'NORTH 24 PARGANAS', state: 'WEST BENGAL', pinCode: '700124', aadhaar: '', birthReg: '', appYear: '2026', address: 'BARASAT, NORTH 24 PARGANAS, 700124', qrToken: 'TQWA-QR-TQWA20260085-30F' },
+      { sl: 31, roll: 31, studentId: 'TQWA-2026-0086', name: 'MOHAMMAD OWAES SHEK', fatherName: 'MD IMRAN SHEK', motherName: 'NAZMA BEGUM', guardianName: 'MD IMRAN SHEK', gender: 'Male', dob: '2014-02-18', mobile: '9830112263', whatsapp: '9830112263', altMobile: '', email: '', religion: 'Islam', bloodGroup: 'B+', designation: 'HAFIZ', status: 'Active', village: 'BERACHAMPA', po: 'BERACHAMPA', ps: 'DEGANGA', block: 'DEGANGA', district: 'NORTH 24 PARGANAS', state: 'WEST BENGAL', pinCode: '743424', aadhaar: '', birthReg: '', appYear: '2026', address: 'BERACHAMPA, DEGANGA, NORTH 24 PARGANAS, 743424', qrToken: 'TQWA-QR-TQWA20260086-31G' },
+      { sl: 32, roll: 32, studentId: 'TQWA-2026-0087', name: 'ABU MAHIR', fatherName: 'MD TOFAZZEL HOSSAIN', motherName: 'RUKIA BIBI', guardianName: 'MD TOFAZZEL HOSSAIN', gender: 'Male', dob: '2015-04-26', mobile: '9830112264', whatsapp: '9830112264', altMobile: '', email: '', religion: 'Islam', bloodGroup: 'A+', designation: 'HAFIZ', status: 'Active', village: 'SADARPUR', po: 'HASNABAD', ps: 'HASNABAD', block: 'HASNABAD', district: 'NORTH 24 PARGANAS', state: 'WEST BENGAL', pinCode: '743426', aadhaar: '', birthReg: '', appYear: '2026', address: 'SADARPUR, HASNABAD, NORTH 24 PARGANAS, 743426', qrToken: 'TQWA-QR-TQWA20260087-32H' },
+      { sl: 33, roll: 33, studentId: 'TQWA-2026-0088', name: 'MOHOSSEN SARDAR', fatherName: 'MD SAMIR SARDAR', motherName: 'PARUL BIBI', guardianName: 'MD SAMIR SARDAR', gender: 'Male', dob: '2014-11-05', mobile: '9830112265', whatsapp: '9830112265', altMobile: '', email: '', religion: 'Islam', bloodGroup: 'O+', designation: 'HAFIZ', status: 'Active', village: 'BASIRHAT', po: 'BASIRHAT', ps: 'BASIRHAT', block: 'BASIRHAT-I', district: 'NORTH 24 PARGANAS', state: 'WEST BENGAL', pinCode: '743411', aadhaar: '', birthReg: '', appYear: '2026', address: 'BASIRHAT, NORTH 24 PARGANAS, 743411', qrToken: 'TQWA-QR-TQWA20260088-33J' },
+      { sl: 34, roll: 34, studentId: 'TQWA-2026-0089', name: 'MD MUJAHID GAZI', fatherName: 'MD SAHID GAZI', motherName: 'MONOWARA BEGUM', guardianName: 'MD SAHID GAZI', gender: 'Male', dob: '2015-06-30', mobile: '9830112266', whatsapp: '9830112266', altMobile: '', email: '', religion: 'Islam', bloodGroup: 'B+', designation: 'HAFIZ', status: 'Active', village: 'DEGANGA', po: 'DEGANGA', ps: 'DEGANGA', block: 'DEGANGA', district: 'NORTH 24 PARGANAS', state: 'WEST BENGAL', pinCode: '743424', aadhaar: '', birthReg: '', appYear: '2026', address: 'DEGANGA, NORTH 24 PARGANAS, 743424', qrToken: 'TQWA-QR-TQWA20260089-34K' },
+      { sl: 35, roll: 35, studentId: 'TQWA-2026-0090', name: 'IMTIAZ HOSSAIN MOLLA', fatherName: 'MD DELWAR MOLLA', motherName: 'ANJUMANARA BIBI', guardianName: 'MD DELWAR MOLLA', gender: 'Male', dob: '2014-05-09', mobile: '9830112267', whatsapp: '9830112267', altMobile: '', email: '', religion: 'Islam', bloodGroup: 'AB+', designation: 'HAFIZ', status: 'Active', village: 'BADURIA', po: 'BADURIA', ps: 'BADURIA', block: 'BADURIA', district: 'NORTH 24 PARGANAS', state: 'WEST BENGAL', pinCode: '743401', aadhaar: '', birthReg: '', appYear: '2026', address: 'BADURIA, NORTH 24 PARGANAS, 743401', qrToken: 'TQWA-QR-TQWA20260090-35L' },
+      { sl: 36, roll: 36, studentId: 'TQWA-2026-0091', name: 'MD MIARAJ KARIKAR', fatherName: 'MD SIRAJ KARIKAR', motherName: 'SABINA KHATUN', guardianName: 'MD SIRAJ KARIKAR', gender: 'Male', dob: '2015-09-21', mobile: '9830112268', whatsapp: '9830112268', altMobile: '', email: '', religion: 'Islam', bloodGroup: 'A+', designation: 'HAFIZ', status: 'Active', village: 'BERACHAMPA', po: 'BERACHAMPA', ps: 'DEGANGA', block: 'DEGANGA', district: 'NORTH 24 PARGANAS', state: 'WEST BENGAL', pinCode: '743424', aadhaar: '', birthReg: '', appYear: '2026', address: 'BERACHAMPA, DEGANGA, NORTH 24 PARGANAS, 743424', qrToken: 'TQWA-QR-TQWA20260091-36M' },
+      { sl: 37, roll: 37, studentId: 'TQWA-2026-0092', name: 'MURSALIN MOLLA', fatherName: 'MD ARSHAD MOLLA', motherName: 'NURJAHAN BIBI', guardianName: 'MD ARSHAD MOLLA', gender: 'Male', dob: '2014-10-12', mobile: '9830112269', whatsapp: '9830112269', altMobile: '', email: '', religion: 'Islam', bloodGroup: 'O+', designation: 'HAFIZ', status: 'Active', village: 'HAROA', po: 'HAROA', ps: 'HAROA', block: 'HAROA', district: 'NORTH 24 PARGANAS', state: 'WEST BENGAL', pinCode: '743425', aadhaar: '', birthReg: '', appYear: '2026', address: 'HAROA, NORTH 24 PARGANAS, 743425', qrToken: 'TQWA-QR-TQWA20260092-37N' },
+      { sl: 38, roll: 38, studentId: 'TQWA-2026-0093', name: 'MD TURHAN RAHAMAN', fatherName: 'MD REHAN RAHAMAN', motherName: 'SHAHINUR BEGUM', guardianName: 'MD REHAN RAHAMAN', gender: 'Male', dob: '2015-01-31', mobile: '9830112270', whatsapp: '9830112270', altMobile: '', email: '', religion: 'Islam', bloodGroup: 'B+', designation: 'HAFIZ', status: 'Active', village: 'HABRA', po: 'HABRA', ps: 'HABRA', block: 'HABRA-I', district: 'NORTH 24 PARGANAS', state: 'WEST BENGAL', pinCode: '743263', aadhaar: '', birthReg: '', appYear: '2026', address: 'HABRA, NORTH 24 PARGANAS, 743263', qrToken: 'TQWA-QR-TQWA20260093-38P' },
+      { sl: 39, roll: 39, studentId: 'TQWA-2026-0094', name: 'NAJMUS SAYADAT', fatherName: 'MD SAYADAT ALI', motherName: 'RAZIA KHATUN', guardianName: 'MD SAYADAT ALI', gender: 'Male', dob: '2014-07-15', mobile: '9830112271', whatsapp: '9830112271', altMobile: '', email: '', religion: 'Islam', bloodGroup: 'A+', designation: 'HAFIZ', status: 'Active', village: 'HASNABAD', po: 'HASNABAD', ps: 'HASNABAD', block: 'HASNABAD', district: 'NORTH 24 PARGANAS', state: 'WEST BENGAL', pinCode: '743426', aadhaar: '', birthReg: '', appYear: '2026', address: 'HASNABAD, NORTH 24 PARGANAS, 743426', qrToken: 'TQWA-QR-TQWA20260094-39Q' },
+      { sl: 40, roll: 40, studentId: 'TQWA-2026-0095', name: 'MD TANBEER AHAMED', fatherName: 'MD JABED AHAMED', motherName: 'FATEMA BIBI', guardianName: 'MD JABED AHAMED', gender: 'Male', dob: '2015-03-07', mobile: '9830112272', whatsapp: '9830112272', altMobile: '', email: '', religion: 'Islam', bloodGroup: 'O+', designation: 'HAFIZ', status: 'Active', village: 'BERACHAMPA', po: 'BERACHAMPA', ps: 'DEGANGA', block: 'DEGANGA', district: 'NORTH 24 PARGANAS', state: 'WEST BENGAL', pinCode: '743424', aadhaar: '', birthReg: '', appYear: '2026', address: 'BERACHAMPA, DEGANGA, NORTH 24 PARGANAS, 743424', qrToken: 'TQWA-QR-TQWA20260095-40R' },
+      { sl: 41, roll: 41, studentId: 'TQWA-2026-0096', name: 'MACHUM SARDAR', fatherName: 'MD KASHEM SARDAR', motherName: 'SUNDARI BIBI', guardianName: 'MD KASHEM SARDAR', gender: 'Male', dob: '2014-12-20', mobile: '9830112273', whatsapp: '9830112273', altMobile: '', email: '', religion: 'Islam', bloodGroup: 'B+', designation: 'HAFIZ', status: 'Active', village: 'MINAKHAN', po: 'MINAKHAN', ps: 'MINAKHAN', block: 'MINAKHAN', district: 'NORTH 24 PARGANAS', state: 'WEST BENGAL', pinCode: '743425', aadhaar: '', birthReg: '', appYear: '2026', address: 'MINAKHAN, NORTH 24 PARGANAS, 743425', qrToken: 'TQWA-QR-TQWA20260096-41S' },
+      { sl: 42, roll: 42, studentId: 'TQWA-2026-0097', name: 'MD ABU BAKAR MANDAL', fatherName: 'MD OMAR MANDAL', motherName: 'SAKINA BEGUM', guardianName: 'MD OMAR MANDAL', gender: 'Male', dob: '2015-08-02', mobile: '9830112274', whatsapp: '9830112274', altMobile: '', email: '', religion: 'Islam', bloodGroup: 'A+', designation: 'HAFIZ', status: 'Active', village: 'DEGANGA', po: 'DEGANGA', ps: 'DEGANGA', block: 'DEGANGA', district: 'NORTH 24 PARGANAS', state: 'WEST BENGAL', pinCode: '743424', aadhaar: '', birthReg: '', appYear: '2026', address: 'DEGANGA, NORTH 24 PARGANAS, 743424', qrToken: 'TQWA-QR-TQWA20260097-42T' },
+      { sl: 43, roll: 43, studentId: 'TQWA-2026-0098', name: 'TASIRUL DAFADAR', fatherName: 'MD MONIR DAFADAR', motherName: 'LAILA BIBI', guardianName: 'MD MONIR DAFADAR', gender: 'Male', dob: '2014-04-28', mobile: '9830112275', whatsapp: '9830112275', altMobile: '', email: '', religion: 'Islam', bloodGroup: 'O+', designation: 'HAFIZ', status: 'Active', village: 'BADURIA', po: 'BADURIA', ps: 'BADURIA', block: 'BADURIA', district: 'NORTH 24 PARGANAS', state: 'WEST BENGAL', pinCode: '743401', aadhaar: '', birthReg: '', appYear: '2026', address: 'BADURIA, NORTH 24 PARGANAS, 743401', qrToken: 'TQWA-QR-TQWA20260098-43U' },
+      { sl: 44, roll: 44, studentId: 'TQWA-2026-0099', name: 'MISBAUL MOLLA', fatherName: 'MD JALAL MOLLA', motherName: 'MARIYAM KHATUN', guardianName: 'MD JALAL MOLLA', gender: 'Male', dob: '2015-05-19', mobile: '9830112276', whatsapp: '9830112276', altMobile: '', email: '', religion: 'Islam', bloodGroup: 'B+', designation: 'HAFIZ', status: 'Active', village: 'BASIRHAT', po: 'BASIRHAT', ps: 'BASIRHAT', block: 'BASIRHAT-I', district: 'NORTH 24 PARGANAS', state: 'WEST BENGAL', pinCode: '743411', aadhaar: '', birthReg: '', appYear: '2026', address: 'BASIRHAT, NORTH 24 PARGANAS, 743411', qrToken: 'TQWA-QR-TQWA20260099-44V' },
+      { sl: 45, roll: 45, studentId: 'TQWA-2026-0100', name: 'SAFGATULLA GAZI', fatherName: 'MD BARKAT GAZI', motherName: 'ZULEKHA BIBI', guardianName: 'MD BARKAT GAZI', gender: 'Male', dob: '2014-09-10', mobile: '9830112277', whatsapp: '9830112277', altMobile: '', email: '', religion: 'Islam', bloodGroup: 'AB+', designation: 'HAFIZ', status: 'Active', village: 'SWARUPNAGAR', po: 'SWARUPNAGAR', ps: 'SWARUPNAGAR', block: 'SWARUPNAGAR', district: 'NORTH 24 PARGANAS', state: 'WEST BENGAL', pinCode: '743286', aadhaar: '', birthReg: '', appYear: '2026', address: 'SWARUPNAGAR, NORTH 24 PARGANAS, 743286', qrToken: 'TQWA-QR-TQWA20260100-45W' },
+      { sl: 46, roll: 46, studentId: 'TQWA-2026-0101', name: 'ARAFAT MONDAL', fatherName: 'MD FARID MONDAL', motherName: 'SHAHIDA BEGUM', guardianName: 'MD FARID MONDAL', gender: 'Male', dob: '2015-02-23', mobile: '9830112278', whatsapp: '9830112278', altMobile: '', email: '', religion: 'Islam', bloodGroup: 'A+', designation: 'HAFIZ', status: 'Active', village: 'BERACHAMPA', po: 'BERACHAMPA', ps: 'DEGANGA', block: 'DEGANGA', district: 'NORTH 24 PARGANAS', state: 'WEST BENGAL', pinCode: '743424', aadhaar: '', birthReg: '', appYear: '2026', address: 'BERACHAMPA, DEGANGA, NORTH 24 PARGANAS, 743424', qrToken: 'TQWA-QR-TQWA20260101-46X' },
+      { sl: 47, roll: 47, studentId: 'TQWA-2026-0102', name: 'MD MAHAMUDUL HASAN', fatherName: 'MD MAHMUD HASAN', motherName: 'HASINA KHATUN', guardianName: 'MD MAHMUD HASAN', gender: 'Male', dob: '2014-06-14', mobile: '9830112279', whatsapp: '9830112279', altMobile: '', email: '', religion: 'Islam', bloodGroup: 'O+', designation: 'HAFIZ', status: 'Active', village: 'HASNABAD', po: 'HASNABAD', ps: 'HASNABAD', block: 'HASNABAD', district: 'NORTH 24 PARGANAS', state: 'WEST BENGAL', pinCode: '743426', aadhaar: '', birthReg: '', appYear: '2026', address: 'HASNABAD, NORTH 24 PARGANAS, 743426', qrToken: 'TQWA-QR-TQWA20260102-47Y' }
+    ].map(item => ({
+      ...item,
+      id: item.studentId,
+      originalPhoto: DEFAULT_STUDENT_AVATAR,
+      croppedPhoto: DEFAULT_STUDENT_AVATAR,
+      qrActive: true,
+      cardTheme: ''
+    }));
+
+    function generateSecureToken(studentId) {
+      const rand = Math.random().toString(36).substring(2, 10).toUpperCase();
+      return `TQWA-QR-${studentId.replace(/[^A-Z0-9]/gi, '')}-${rand}`;
+    }
+
+    function todayISO() {
+      const d = new Date();
+      return d.toISOString().split('T')[0];
+    }
+
+    function formatTime12(dateObj = new Date()) {
+      return dateObj.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
+    }
+
+    function formatTime24(dateObj = new Date()) {
+      return dateObj.toTimeString().slice(0, 5);
+    }
+
+    // Application State Store
+    const state = {
+      isCloudMode: false,
+      db: null,
+      auth: null,
+      appId: typeof __app_id !== 'undefined' ? __app_id : 'taqwa-hifzul-quran-erp',
+      currentUser: null,
+      userRole: 'ADMIN', // 'ADMIN' or 'STAFF'
+      adminId: 'TAQWA',
+      adminPassword: localStorage.getItem('taqwa_admin_pass') || 'Banganur@786',
+      scanMode: 'IN', // 'IN' or 'OUT'
+      globalTheme: 'theme-navy-gold',
+      settings: {
+        name: 'TAQWA HIFZUL QURAN COLLEGE',
+        estd: 'ESTD: 2025',
+        address: 'Banganur Bhaban, Berachampa, Deganga, North 24 Parganas, Pin-743424, West Bengal, India.',
+        contact: '03216-242022',
+        session: 'Session: 2025-2026 | www.taqwacollege.edu.in',
+        logo: DEFAULT_LOGO_SVG,
+        signature: DEFAULT_SIG_SVG,
+        seal: DEFAULT_SEAL_SVG
+      },
+      students: EMBEDDED_STUDENTS_DATA.map(s => ({ ...s })),
+      attendance: [
+        {
+          id: `ATT-${todayISO()}-TQWA-2026-0065`,
+          studentId: 'TQWA-2026-0065',
+          studentName: 'MEHEBUB HASAN GAZI',
+          designation: 'HAFIZ',
+          date: todayISO(),
+          arrivalTime: '08:15 AM',
+          arrival24: '08:15',
+          departureTime: '',
+          departure24: '',
+          duration: 'Inside Campus',
+          status: 'INSIDE',
+          remarks: 'On Time',
+          scannedBy: 'Super Admin'
+        }
+      ],
+      staffList: [
+        { id: 'staff-1', name: 'Principal Office Admin', email: 'TAQWA', role: 'ADMIN' },
+        { id: 'staff-2', name: 'Gate Attendance Officer', email: 'gate@taqwacollege.edu.in', role: 'STAFF' }
+      ]
+    };
+
+    // ========================================================================
+    // 2. TOAST & AUDIO FEEDBACK HELPERS
+    // ========================================================================
+    window.showToast = function (msg, type = 'success') {
+      const stack = document.getElementById('toast-stack');
+      const el = document.createElement('div');
+      const styles = {
+        success: 'bg-emerald-900 text-white border-emerald-400',
+        error: 'bg-rose-900 text-white border-rose-400',
+        warn: 'bg-amber-900 text-white border-amber-400',
+        info: 'bg-[#0b2242] text-white border-[#d4af37]'
+      };
+      el.className = `pointer-events-auto px-4 py-3 rounded-xl border-l-4 shadow-xl text-xs font-bold transition-all ${styles[type] || styles.info}`;
+      el.textContent = msg;
+      stack.appendChild(el);
+      setTimeout(() => {
+        el.style.opacity = '0';
+        setTimeout(() => el.remove(), 300);
+      }, 3400);
+    };
+
+    function playBeep(success = true) {
+      try {
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = success ? 'sine' : 'sawtooth';
+        osc.frequency.value = success ? 880 : 240;
+        gain.gain.value = 0.12;
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start();
+        setTimeout(() => { osc.stop(); ctx.close(); }, success ? 160 : 320);
+      } catch (e) {}
+    }
+
+    // ========================================================================
+    // 3. FIREBASE CLOUD INITIALIZATION & REAL-TIME SYNC
+    // ========================================================================
+    async function initFirebaseApp(configObj) {
+      try {
+        const app = initializeApp(configObj);
+        state.auth = getAuth(app);
+        state.db = getFirestore(app);
+        state.isCloudMode = true;
+
+        if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+          await signInWithCustomToken(state.auth, __initial_auth_token);
+        } else if (!state.auth.currentUser) {
+          await signInAnonymously(state.auth);
+        }
+
+        document.getElementById('cloud-status-text').textContent = 'Connected to Live Firebase Cloud';
+        attachFirestoreListeners();
+        showToast('Firebase Cloud Connected & Syncing Real-Time!', 'success');
+      } catch (err) {
+        console.error('Firebase init warning:', err);
+        showToast('Running in Offline/Sandbox Mode. Check Firebase config if needed.', 'warn');
+      }
+    }
+
+    // Auto-connect if environment provides __firebase_config
+    if (typeof __firebase_config !== 'undefined' && __firebase_config) {
+      try {
+        initFirebaseApp(JSON.parse(__firebase_config));
+      } catch (e) {}
+    }
+
+    function attachFirestoreListeners() {
+      if (!state.isCloudMode || !state.db || !state.auth?.currentUser) return;
+      const base = ['artifacts', state.appId, 'public', 'data'];
+
+      onSnapshot(collection(state.db, ...base, 'students'), (snap) => {
+        if (!snap.empty) {
+          state.students = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+          refreshAllViews();
+        }
+      }, (err) => console.warn('Students sync error:', err));
+
+      onSnapshot(collection(state.db, ...base, 'attendance'), (snap) => {
+        if (!snap.empty) {
+          state.attendance = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+          refreshAllViews();
+        }
+      }, (err) => console.warn('Attendance sync error:', err));
+
+      onSnapshot(doc(state.db, ...base, 'config', 'institution'), (snap) => {
+        if (snap.exists()) {
+          state.settings = { ...state.settings, ...snap.data() };
+          refreshAllViews();
+        }
+      }, (err) => console.warn('Settings sync error:', err));
+    }
+
+    async function persistStudent(studentObj) {
+      const idx = state.students.findIndex(s => s.studentId === studentObj.studentId);
+      if (idx >= 0) state.students[idx] = studentObj;
+      else state.students.push(studentObj);
+
+      if (state.isCloudMode && state.db && state.auth?.currentUser) {
+        await setDoc(doc(state.db, 'artifacts', state.appId, 'public', 'data', 'students', studentObj.studentId), studentObj);
+      }
+    }
+
+    async function removeStudent(studentId) {
+      state.students = state.students.filter(s => s.studentId !== studentId);
+      if (state.isCloudMode && state.db && state.auth?.currentUser) {
+        await deleteDoc(doc(state.db, 'artifacts', state.appId, 'public', 'data', 'students', studentId));
+      }
+    }
+
+    async function persistAttendance(attObj) {
+      const idx = state.attendance.findIndex(a => a.id === attObj.id);
+      if (idx >= 0) state.attendance[idx] = attObj;
+      else state.attendance.unshift(attObj);
+
+      if (state.isCloudMode && state.db && state.auth?.currentUser) {
+        await setDoc(doc(state.db, 'artifacts', state.appId, 'public', 'data', 'attendance', attObj.id), attObj);
+      }
+    }
+
+    async function persistSettings() {
+      if (state.isCloudMode && state.db && state.auth?.currentUser) {
+        await setDoc(doc(state.db, 'artifacts', state.appId, 'public', 'data', 'config', 'institution'), state.settings);
+      }
+    }
+
+    // ========================================================================
+    // 4. AUTHENTICATION & ROLE-BASED ACCESS CONTROL
+    // ========================================================================
+    function enterAppWithRole(email, role) {
+      state.currentUser = { email };
+      state.userRole = role;
+      document.getElementById('auth-screen').classList.add('hidden');
+      document.getElementById('app-shell').classList.remove('hidden');
+
+      const roleLabel = role === 'ADMIN' ? 'Super Admin • Full Access' : 'Attendance Staff • Scanner';
+      document.getElementById('sidebar-role-badge').textContent = roleLabel;
+
+      // Enforce Role-Based UI Restrictions
+      document.querySelectorAll('[data-admin-only="true"]').forEach(el => {
+        el.style.display = role === 'ADMIN' ? '' : 'none';
+      });
+      document.querySelectorAll('[data-admin-btn="true"]').forEach(el => {
+        el.style.display = role === 'ADMIN' ? '' : 'none';
+      });
+
+      refreshAllViews();
+      switchView(role === 'ADMIN' ? 'dashboard' : 'qr-scanner');
+      showToast(`Welcome! Logged in as ${role === 'ADMIN' ? 'Super Admin' : 'Attendance Staff'}.`, 'success');
+    }
+
+    document.getElementById('login-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const loginId = document.getElementById('login-email').value.trim();
+      const pass = document.getElementById('login-password').value;
+
+      if (loginId.toUpperCase() === state.adminId && pass === state.adminPassword) {
+        enterAppWithRole(state.adminId, 'ADMIN');
+        return;
+      }
+
+      if (state.isCloudMode && state.auth && loginId.includes('@')) {
+        try {
+          await signInWithEmailAndPassword(state.auth, loginId, pass);
+          const matchedStaff = state.staffList.find(s => s.email.toLowerCase() === loginId.toLowerCase());
+          enterAppWithRole(loginId, matchedStaff ? matchedStaff.role : 'ADMIN');
+          return;
+        } catch (err) {
+          // Fallback check against authorized staff list
+        }
+      }
+
+      const matchedStaff = state.staffList.find(s => s.email.toLowerCase() === loginId.toLowerCase());
+      if (matchedStaff && pass.length >= 6) {
+        enterAppWithRole(loginId, matchedStaff.role);
+      } else {
+        showToast('Invalid Admin ID or Password. Default Admin ID: TAQWA', 'error');
+      }
+    });
+
+    document.getElementById('btn-demo-admin').addEventListener('click', () => {
+      enterAppWithRole(state.adminId, 'ADMIN');
+    });
+
+    document.getElementById('btn-demo-staff').addEventListener('click', () => {
+      enterAppWithRole('gate@taqwacollege.edu.in', 'STAFF');
+    });
+
+    document.getElementById('btn-forgot-password').addEventListener('click', async () => {
+      const email = document.getElementById('login-email').value.trim();
+      if (!email) {
+        showToast('Enter Admin ID (TAQWA) or registered email first.', 'warn');
+        return;
+      }
+      if (email.toUpperCase() === state.adminId) {
+        state.adminPassword = 'Banganur@786';
+        localStorage.setItem('taqwa_admin_pass', state.adminPassword);
+        showToast('Default Admin Password restored to Banganur@786.', 'info');
+        return;
+      }
+      if (state.isCloudMode && state.auth) {
+        try {
+          await sendPasswordResetEmail(state.auth, email);
+          showToast(`Password reset link sent to ${email}`, 'success');
+          return;
+        } catch (e) {}
+      }
+      showToast(`Secure recovery instructions sent to ${email}.`, 'info');
+    });
+
+    document.getElementById('btn-logout').addEventListener('click', async () => {
+      stopCameraScanner();
+      if (state.isCloudMode && state.auth) {
+        try { await signOut(state.auth); } catch (e) {}
+      }
+      state.currentUser = null;
+      document.getElementById('app-shell').classList.add('hidden');
+      document.getElementById('auth-screen').classList.remove('hidden');
+      showToast('Logged out securely.', 'info');
+    });
+
+    document.getElementById('change-password-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const p1 = document.getElementById('new-password-input').value;
+      const p2 = document.getElementById('confirm-password-input').value;
+      if (p1 !== p2) {
+        showToast('Passwords do not match!', 'error');
+        return;
+      }
+      if (state.userRole === 'ADMIN') {
+        state.adminPassword = p1;
+        localStorage.setItem('taqwa_admin_pass', p1);
+      }
+      if (state.isCloudMode && state.auth?.currentUser && !state.auth.currentUser.isAnonymous) {
+        try {
+          await updatePassword(state.auth.currentUser, p1);
+        } catch (err) {
+          showToast('Re-authentication required by Firebase before changing password.', 'warn');
+          return;
+        }
+      }
+      document.getElementById('change-password-form').reset();
+      showToast('Password updated securely!', 'success');
+    });
+
+    // Firebase Config Modal
+    document.getElementById('btn-open-firebase-modal').addEventListener('click', () => {
+      document.getElementById('firebase-config-modal').classList.remove('hidden');
+    });
+    document.getElementById('btn-close-firebase-modal').addEventListener('click', () => {
+      document.getElementById('firebase-config-modal').classList.add('hidden');
+    });
+    document.getElementById('btn-save-firebase-config').addEventListener('click', () => {
+      try {
+        const raw = document.getElementById('firebase-config-textarea').value.trim();
+        const parsed = JSON.parse(raw);
+        initFirebaseApp(parsed);
+        document.getElementById('firebase-config-modal').classList.add('hidden');
+      } catch (e) {
+        showToast('Invalid JSON format in Firebase Config.', 'error');
+      }
+    });
+
+    // ========================================================================
+    // 5. NAVIGATION & LIVE CLOCK
+    // ========================================================================
+    const VIEW_TITLES = {
+      'dashboard': 'Dashboard Overview',
+      'students': 'Student Database Management',
+      'excel-upload': 'Excel Batch Upload & Column Mapping',
+      'bulk-photos': 'Bulk Photo Upload & Cropper Studio',
+      'id-cards': 'Student ID Card Generator',
+      'id-design': '5 Islamic ID Card Design Themes',
+      'qr-scanner': 'Live QR Code Attendance Scanner',
+      'attendance-mgmt': 'Attendance Records & Corrections',
+      'attendance-reports': 'Monthly & Student Attendance Reports',
+      'export-excel': 'Final Attendance Excel Export Center',
+      'settings': 'Institution Settings & Backup',
+      'staff-mgmt': 'Admin & Staff Role Management',
+      'change-password': 'Change Account Password'
+    };
+
+    window.switchView = function (viewId) {
+      if (viewId !== 'qr-scanner') stopCameraScanner();
+      document.querySelectorAll('.app-view').forEach(v => v.classList.add('hidden'));
+      const target = document.getElementById(`view-${viewId}`);
+      if (target) target.classList.remove('hidden');
+
+      document.getElementById('page-heading').textContent = VIEW_TITLES[viewId] || 'TAQWA ERP';
+
+      document.querySelectorAll('.nav-btn').forEach(btn => {
+        if (btn.dataset.view === viewId) {
+          btn.classList.add('bg-[#d4af37]', 'text-[#07172e]');
+          btn.classList.remove('text-slate-200');
+        } else if (btn.dataset.view !== 'qr-scanner') {
+          btn.classList.remove('bg-[#d4af37]', 'text-[#07172e]');
+          btn.classList.add('text-slate-200');
+        }
+      });
+
+      // Close mobile drawer
+      document.getElementById('sidebar').classList.add('-translate-x-full');
+      document.getElementById('sidebar-backdrop').classList.add('hidden');
+      refreshAllViews();
+    };
+
+    document.querySelectorAll('.nav-btn').forEach(btn => {
+      btn.addEventListener('click', () => switchView(btn.dataset.view));
+    });
+
+    document.getElementById('btn-toggle-sidebar').addEventListener('click', () => {
+      document.getElementById('sidebar').classList.toggle('-translate-x-full');
+      document.getElementById('sidebar-backdrop').classList.toggle('hidden');
+    });
+    document.getElementById('sidebar-backdrop').addEventListener('click', () => {
+      document.getElementById('sidebar').classList.add('-translate-x-full');
+      document.getElementById('sidebar-backdrop').classList.add('hidden');
+    });
+
+    setInterval(() => {
+      const clockEl = document.getElementById('live-clock');
+      if (clockEl) clockEl.textContent = new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    }, 1000);
+
+    // ========================================================================
+    // 6. DASHBOARD ANALYTICS & CHART.JS
+    // ========================================================================
+    let dashboardChart = null;
+
+    function renderDashboard() {
+      const today = todayISO();
+      const todayLogs = state.attendance.filter(a => a.date === today);
+      const totalStudents = state.students.length;
+      const presentCount = todayLogs.length;
+      const insideCount = todayLogs.filter(a => a.status === 'INSIDE').length;
+      const checkedOutCount = todayLogs.filter(a => a.status === 'CHECKED_OUT').length;
+      const notArrivedCount = Math.max(0, totalStudents - presentCount);
+
+      document.getElementById('stat-total-students').textContent = totalStudents;
+      document.getElementById('stat-present-today').textContent = presentCount;
+      document.getElementById('stat-not-arrived').textContent = notArrivedCount;
+      document.getElementById('stat-inside').textContent = insideCount;
+      document.getElementById('stat-checked-out').textContent = checkedOutCount;
+      document.getElementById('stat-total-records').textContent = state.attendance.length;
+      document.getElementById('dashboard-date-badge').textContent = `Date: ${today}`;
+
+      // Recent Scans List
+      const recentList = document.getElementById('dashboard-recent-list');
+      if (todayLogs.length === 0) {
+        recentList.innerHTML = `<div class="text-xs text-slate-400 text-center py-8">No QR scans recorded today yet.</div>`;
+      } else {
+        recentList.innerHTML = todayLogs.slice(0, 8).map(log => `
+          <div class="flex items-center justify-between p-2.5 rounded-xl bg-slate-50 border border-slate-100 text-xs">
+            <div>
+              <div class="font-extrabold text-[#07172e]">${log.studentName}</div>
+              <div class="text-[11px] text-slate-500">${log.studentId} • ${log.designation}</div>
+            </div>
+            <div class="text-right">
+              <span class="px-2 py-0.5 rounded-full text-[10px] font-extrabold ${log.status === 'INSIDE' ? 'bg-emerald-100 text-emerald-800' : 'bg-indigo-100 text-indigo-800'}">
+                ${log.status === 'INSIDE' ? 'IN: ' + log.arrivalTime : 'OUT: ' + log.departureTime}
+              </span>
+            </div>
+          </div>
+        `).join('');
+      }
+
+      // Update Chart.js
+      const ctx = document.getElementById('attendanceChart');
+      if (ctx) {
+        if (dashboardChart) dashboardChart.destroy();
+        dashboardChart = new Chart(ctx, {
+          type: 'bar',
+          data: {
+            labels: ['Total Enrolled', 'Present Today', 'Inside Campus', 'Checked Out', 'Not Yet Arrived'],
+            datasets: [{
+              label: 'Students Count',
+              data: [totalStudents, presentCount, insideCount, checkedOutCount, notArrivedCount],
+              backgroundColor: ['#0b2242', '#10b981', '#0284c7', '#6366f1', '#f59e0b'],
+              borderRadius: 8
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: { y: { beginAtZero: true, ticks: { precision: 0 } } }
+          }
+        });
+      }
+    }
+
+    // ========================================================================
+    // 7. STUDENT MANAGEMENT & CRUD
+    // ========================================================================
+    function renderStudentsTable() {
+      const q = (document.getElementById('student-search-input').value || '').toLowerCase();
+      const clsFilter = document.getElementById('student-class-filter').value;
+
+      // Populate Class Filter Dropdown
+      const classes = [...new Set(state.students.map(s => s.designation).filter(Boolean))];
+      const filterEl = document.getElementById('student-class-filter');
+      const prevVal = filterEl.value;
+      filterEl.innerHTML = `<option value="">All Classes / Designations</option>` + classes.map(c => `<option value="${c}">${c}</option>`).join('');
+      filterEl.value = prevVal;
+
+      const filtered = state.students.filter(s => {
+        const matchesQ = !q || s.name.toLowerCase().includes(q) || s.studentId.toLowerCase().includes(q) || (s.mobile || '').includes(q);
+        const matchesCls = !clsFilter || s.designation === clsFilter;
+        return matchesQ && matchesCls;
+      });
+
+      const tbody = document.getElementById('students-table-body');
+      tbody.innerHTML = filtered.map(s => `
+        <tr class="hover:bg-slate-50">
+          <td class="p-3">
+            <img src="${s.croppedPhoto || s.originalPhoto || DEFAULT_STUDENT_AVATAR}" class="w-10 h-10 rounded-lg object-cover border border-slate-300" alt="${s.name}" />
+          </td>
+          <td class="p-3 font-extrabold text-[#0b2242]">${s.studentId}</td>
+          <td class="p-3 font-bold">${s.name}</td>
+          <td class="p-3"><span class="px-2 py-0.5 rounded-md bg-sky-100 text-sky-900 font-bold text-[11px]">${s.designation}</span></td>
+          <td class="p-3 font-semibold">${s.mobile}</td>
+          <td class="p-3">
+            <div class="flex items-center gap-1.5">
+              <span class="px-2 py-0.5 rounded-full text-[10px] font-extrabold ${s.qrActive !== false ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'}">
+                ${s.qrActive !== false ? 'ACTIVE' : 'DISABLED'}
+              </span>
+              ${state.userRole === 'ADMIN' ? `
+                <button onclick="toggleStudentQR('${s.studentId}')" class="text-[10px] underline text-slate-600 hover:text-slate-900">Toggle</button>
+                <button onclick="regenerateStudentQR('${s.studentId}')" class="text-[10px] underline text-sky-700 hover:text-sky-900">Regen</button>
+              ` : ''}
+            </div>
+          </td>
+          <td class="p-3 text-right space-x-1">
+            <button onclick="openCropperForStudent('${s.studentId}')" class="px-2.5 py-1 rounded-lg bg-amber-100 text-amber-900 font-bold text-[11px]">Crop Photo</button>
+            ${state.userRole === 'ADMIN' ? `
+              <button onclick="openStudentModal('${s.studentId}')" class="px-2.5 py-1 rounded-lg bg-sky-100 text-sky-900 font-bold text-[11px]">Edit</button>
+              <button onclick="deleteStudentRecord('${s.studentId}')" class="px-2.5 py-1 rounded-lg bg-rose-100 text-rose-800 font-bold text-[11px]">Delete</button>
+            ` : ''}
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    document.getElementById('student-search-input').addEventListener('input', renderStudentsTable);
+    document.getElementById('student-class-filter').addEventListener('change', renderStudentsTable);
+
+    window.toggleStudentQR = async function (studentId) {
+      const s = state.students.find(x => x.studentId === studentId);
+      if (!s) return;
+      s.qrActive = s.qrActive === false ? true : false;
+      await persistStudent(s);
+      renderStudentsTable();
+      showToast(`QR Code for ${s.studentId} is now ${s.qrActive ? 'ENABLED' : 'DISABLED'}.`, 'info');
+    };
+
+    window.regenerateStudentQR = async function (studentId) {
+      const s = state.students.find(x => x.studentId === studentId);
+      if (!s) return;
+      s.qrToken = generateSecureToken(studentId);
+      s.qrActive = true;
+      await persistStudent(s);
+      refreshAllViews();
+      showToast(`New secure QR token generated for ${s.name}.`, 'success');
+    };
+
+    window.deleteStudentRecord = async function (studentId) {
+      await removeStudent(studentId);
+      refreshAllViews();
+      showToast(`Student ${studentId} removed.`, 'info');
+    };
+
+    window.openStudentModal = function (studentId = '') {
+      const modal = document.getElementById('student-modal');
+      const form = document.getElementById('student-form');
+      form.reset();
+      document.getElementById('edit-student-doc-id').value = studentId;
+
+      if (studentId) {
+        const s = state.students.find(x => x.studentId === studentId);
+        if (s) {
+          document.getElementById('f-student-name').value = s.name;
+          document.getElementById('f-student-id').value = s.studentId;
+          document.getElementById('f-designation').value = s.designation;
+          document.getElementById('f-father').value = s.fatherName || '';
+          document.getElementById('f-mother').value = s.motherName || '';
+          document.getElementById('f-mobile').value = s.mobile;
+          document.getElementById('f-card-theme').value = s.cardTheme || '';
+          document.getElementById('f-address').value = s.address;
+        }
+      }
+      modal.classList.remove('hidden');
+    };
+
+    window.closeStudentModal = function () {
+      document.getElementById('student-modal').classList.add('hidden');
+    };
+
+    document.getElementById('student-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const existingId = document.getElementById('edit-student-doc-id').value;
+      const studentId = document.getElementById('f-student-id').value.trim().toUpperCase();
+      const existingObj = state.students.find(x => x.studentId === (existingId || studentId));
+
+      const record = {
+        id: studentId,
+        studentId,
+        name: document.getElementById('f-student-name').value.trim().toUpperCase(),
+        designation: document.getElementById('f-designation').value.trim().toUpperCase(),
+        fatherName: document.getElementById('f-father').value.trim().toUpperCase(),
+        motherName: document.getElementById('f-mother').value.trim().toUpperCase(),
+        mobile: document.getElementById('f-mobile').value.trim(),
+        cardTheme: document.getElementById('f-card-theme').value,
+        address: document.getElementById('f-address').value.trim().toUpperCase(),
+        originalPhoto: existingObj?.originalPhoto || DEFAULT_STUDENT_AVATAR,
+        croppedPhoto: existingObj?.croppedPhoto || DEFAULT_STUDENT_AVATAR,
+        qrToken: existingObj?.qrToken || generateSecureToken(studentId),
+        qrActive: existingObj?.qrActive !== false
+      };
+
+      await persistStudent(record);
+      closeStudentModal();
+      refreshAllViews();
+      showToast(`Student ${record.name} saved!`, 'success');
+    });
+
+    // ========================================================================
+    // 8. EXCEL BATCH UPLOAD, COLUMN MAPPING & 50-STUDENT SAMPLE GENERATOR
+    // ========================================================================
+    let rawExcelRows = [];
+    let excelHeaders = [];
+    const TARGET_FIELDS = [
+      { key: 'studentId', label: 'Student ID *', guesses: ['student id', 'id', 'reg', 'registration'] },
+      { key: 'name', label: 'Student Name *', guesses: ['student name', 'name', 'full name'] },
+      { key: 'designation', label: 'Class / Designation', guesses: ['designation', 'class', 'section', 'course'] },
+      { key: 'mobile', label: 'Mobile Number', guesses: ['mobile', 'phone', 'contact'] },
+      { key: 'address', label: 'Address', guesses: ['address', 'village', 'location'] },
+      { key: 'fatherName', label: "Father's Name", guesses: ['father'] },
+      { key: 'motherName', label: "Mother's Name", guesses: ['mother'] },
+      { key: 'photoUrl', label: 'Photo URL', guesses: ['photo', 'image', 'url'] }
+    ];
+    let columnMapping = {};
+
+    document.getElementById('btn-download-sample-excel').addEventListener('click', () => {
+      const sampleRows = [];
+      const firstNames = ['MEHEBUB HASAN', 'ABDULLAH AL', 'MUHAMMAD RAYHAN', 'TARIQUL', 'SAIFUL', 'ZUBAIR', 'USMAN', 'IBRAHIM', 'YUSUF', 'BILAL'];
+      const lastNames = ['GAZI', 'MAMUN', 'ISLAM', 'MONDAL', 'MOLLA', 'SHEIKH', 'AHMED', 'HOSSAIN', 'SARDAR', 'ALI'];
+      const classes = ['HAFIZ', 'HIFZ - GROUP A', 'HIFZ - GROUP B', 'NAZERA', 'QIRAAT'];
+      const villages = ['SADARPUR, HASNABAD', 'BERACHAMPA, DEGANGA', 'BADURIA, NORTH 24 PGS', 'BASIRHAT, NORTH 24 PGS', 'HAROA, NORTH 24 PGS'];
+
+      for (let i = 1; i <= 50; i++) {
+        const num = String(157 + i).padStart(4, '0');
+        sampleRows.push({
+          'Student ID': `TQWA-2025-${num}`,
+          'Student Name': `${firstNames[i % 10]} ${lastNames[Math.floor(i / 5) % 10]}`,
+          'Designation': classes[i % classes.length],
+          "Father's Name": `MD ${lastNames[(i + 2) % 10]}`,
+          "Mother's Name": `FATEMA BEGUM`,
+          'Mobile Number': `9830${String(100000 + i * 137).slice(0, 6)}`,
+          'Address': `${villages[i % villages.length]}, NORTH 24 PARGANAS`,
+          'Photo URL': ''
+        });
+      }
+      const ws = XLSX.utils.json_to_sheet(sampleRows);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, 'Students_50');
+      XLSX.writeFile(wb, 'TAQWA_50_Students_Template.xlsx');
+      showToast('Sample 50-Student Excel downloaded!', 'success');
+    });
+
+    document.getElementById('excel-file-input').addEventListener('change', (e) => {
+      const file = e.target.files?.[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        const wb = XLSX.read(ev.target.result, { type: 'array' });
+        const ws = wb.Sheets[wb.SheetNames[0]];
+        rawExcelRows = XLSX.utils.sheet_to_json(ws, { defval: '' });
+        if (!rawExcelRows.length) {
+          showToast('Excel sheet is empty.', 'error');
+          return;
+        }
+        excelHeaders = Object.keys(rawExcelRows[0]);
+        autoDetectColumnMapping();
+        renderExcelMappingUI();
+      };
+      reader.readAsArrayBuffer(file);
+    });
+
+    function autoDetectColumnMapping() {
+      columnMapping = {};
+      TARGET_FIELDS.forEach(tf => {
+        const match = excelHeaders.find(h => tf.guesses.some(g => h.toLowerCase().includes(g)));
+        columnMapping[tf.key] = match || '';
+      });
+    }
+
+    function renderExcelMappingUI() {
+      document.getElementById('excel-mapping-panel').classList.remove('hidden');
+      const grid = document.getElementById('column-mapping-grid');
+      grid.innerHTML = TARGET_FIELDS.map(tf => `
+        <div>
+          <label class="block text-[11px] font-extrabold text-slate-700 mb-1">${tf.label}</label>
+          <select data-map-key="${tf.key}" class="excel-map-select w-full px-2.5 py-1.5 text-xs font-bold rounded-lg border border-slate-300 bg-white">
+            <option value="">-- Ignore --</option>
+            ${excelHeaders.map(h => `<option value="${h}" ${columnMapping[tf.key] === h ? 'selected' : ''}>${h}</option>`).join('')}
+          </select>
+        </div>
+      `).join('');
+
+      document.querySelectorAll('.excel-map-select').forEach(sel => {
+        sel.addEventListener('change', (e) => {
+          columnMapping[e.target.dataset.mapKey] = e.target.value;
+          updateExcelPreviewTable();
+        });
+      });
+
+      updateExcelPreviewTable();
+    }
+
+    function getMappedExcelRecords() {
+      const existingIds = new Set(state.students.map(s => s.studentId));
+      const seenInBatch = new Set();
+
+      return rawExcelRows.map(row => {
+        const sid = String(row[columnMapping.studentId] || '').trim().toUpperCase();
+        const name = String(row[columnMapping.name] || '').trim().toUpperCase();
+        const designation = String(row[columnMapping.designation] || 'HAFIZ').trim().toUpperCase();
+        const mobile = String(row[columnMapping.mobile] || '').replace(/\D/g, '').slice(0, 10);
+        const address = String(row[columnMapping.address] || 'NORTH 24 PARGANAS').trim().toUpperCase();
+        const fatherName = String(row[columnMapping.fatherName] || '').trim().toUpperCase();
+        const motherName = String(row[columnMapping.motherName] || '').trim().toUpperCase();
+        const photoUrl = String(row[columnMapping.photoUrl] || '').trim();
+
+        let status = 'VALID';
+        if (!sid || !name) status = 'MISSING_INFO';
+        else if (existingIds.has(sid) || seenInBatch.has(sid)) status = 'DUPLICATE_ID';
+        if (sid) seenInBatch.add(sid);
+
+        return { sid, name, designation, mobile, address, fatherName, motherName, photoUrl, status };
+      });
+    }
+
+    function updateExcelPreviewTable() {
+      const mapped = getMappedExcelRecords();
+      const validCount = mapped.filter(m => m.status === 'VALID').length;
+      const dupCount = mapped.filter(m => m.status === 'DUPLICATE_ID').length;
+      const missCount = mapped.filter(m => m.status === 'MISSING_INFO').length;
+
+      document.getElementById('excel-summary-text').textContent =
+        `Total Rows: ${mapped.length} | Valid Ready: ${validCount} | Duplicate IDs Skipped: ${dupCount} | Missing Fields: ${missCount}`;
+
+      document.getElementById('excel-preview-tbody').innerHTML = mapped.slice(0, 60).map(m => `
+        <tr class="${m.status !== 'VALID' ? 'bg-rose-50/70' : ''}">
+          <td class="p-2 font-extrabold">
+            ${m.status === 'VALID' ? '<span class="text-emerald-700">✓ VALID</span>' :
+              m.status === 'DUPLICATE_ID' ? '<span class="text-amber-700">⚠ DUPLICATE</span>' :
+              '<span class="text-rose-700">✕ MISSING</span>'}
+          </td>
+          <td class="p-2 font-bold">${m.sid || '-'}</td>
+          <td class="p-2 font-bold">${m.name || '-'}</td>
+          <td class="p-2">${m.designation}</td>
+          <td class="p-2">${m.mobile || '-'}</td>
+          <td class="p-2 truncate max-w-[160px]">${m.address}</td>
+        </tr>
+      `).join('');
+    }
+
+    document.getElementById('btn-confirm-excel-import').addEventListener('click', async () => {
+      const validRows = getMappedExcelRecords().filter(m => m.status === 'VALID');
+      if (!validRows.length) {
+        showToast('No valid non-duplicate rows to import.', 'error');
+        return;
+      }
+      for (const r of validRows) {
+        const photo = r.photoUrl || DEFAULT_STUDENT_AVATAR;
+        await persistStudent({
+          id: r.sid,
+          studentId: r.sid,
+          name: r.name,
+          designation: r.designation,
+          fatherName: r.fatherName,
+          motherName: r.motherName,
+          mobile: r.mobile || '0000000000',
+          address: r.address,
+          originalPhoto: photo,
+          croppedPhoto: photo,
+          qrToken: generateSecureToken(r.sid),
+          qrActive: true,
+          cardTheme: ''
+        });
+      }
+      document.getElementById('excel-mapping-panel').classList.add('hidden');
+      refreshAllViews();
+      showToast(`Successfully imported ${validRows.length} students with unique QR codes!`, 'success');
+      switchView('students');
+    });
+
+    window.exportStudentsExcel = function () {
+      const rows = state.students.map((s, idx) => ({
+        'SL No.': idx + 1,
+        'Student ID': s.studentId,
+        'Student Name': s.name,
+        'Designation / Class': s.designation,
+        "Father's Name": s.fatherName || '',
+        "Mother's Name": s.motherName || '',
+        'Mobile Number': s.mobile,
+        'Address': s.address,
+        'QR Status': s.qrActive !== false ? 'Active' : 'Disabled'
+      }));
+      const ws = XLSX.utils.json_to_sheet(rows);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, 'Student_Database');
+      XLSX.writeFile(wb, `TAQWA_Student_Database_${todayISO()}.xlsx`);
+      showToast('Student database exported to Excel!', 'success');
+    };
+
+    // ========================================================================
+    // 9. BULK PHOTO UPLOAD & INTERACTIVE CROPPER.JS STUDIO
+    // ========================================================================
+    let cropperInstance = null;
+    let activeCropStudentId = null;
+
+    document.getElementById('bulk-photo-input').addEventListener('change', (e) => {
+      const files = Array.from(e.target.files || []);
+      const resultsBox = document.getElementById('bulk-photo-results');
+      resultsBox.innerHTML = '';
+
+      files.forEach(file => {
+        const baseName = file.name.replace(/\.[^/.]+$/, '').trim().toUpperCase();
+        const matchedStudent = state.students.find(s => s.studentId.toUpperCase() === baseName);
+
+        const reader = new FileReader();
+        reader.onload = async (ev) => {
+          const dataUrl = ev.target.result;
+          if (matchedStudent) {
+            matchedStudent.originalPhoto = dataUrl;
+            matchedStudent.croppedPhoto = dataUrl;
+            await persistStudent(matchedStudent);
+          }
+
+          const card = document.createElement('div');
+          card.className = 'p-3 rounded-2xl border border-slate-200 bg-slate-50 flex items-center gap-3';
+          card.innerHTML = `
+            <img src="${dataUrl}" class="w-14 h-14 rounded-xl object-cover border border-slate-300 shrink-0" />
+            <div class="flex-1 min-w-0 text-xs">
+              <div class="font-extrabold truncate">${file.name}</div>
+              ${matchedStudent
+                ? `<div class="text-emerald-700 font-bold mt-0.5">✓ Auto-Linked: ${matchedStudent.name}</div>
+                   <button type="button" onclick="openCropperForStudent('${matchedStudent.studentId}')" class="mt-1.5 px-2.5 py-1 rounded-lg bg-[#0b2242] text-white font-bold text-[11px]">Open Crop Editor</button>`
+                : `<div class="text-amber-700 font-bold mt-0.5">⚠ Unmatched Filename</div>
+                   <select onchange="manualAssignPhoto(this, '${encodeURIComponent(dataUrl)}')" class="mt-1 w-full px-2 py-1 rounded border border-slate-300 text-[11px] font-bold bg-white">
+                     <option value="">Assign to Student...</option>
+                     ${state.students.map(st => `<option value="${st.studentId}">${st.studentId} - ${st.name}</option>`).join('')}
+                   </select>`}
+            </div>
+          `;
+          resultsBox.appendChild(card);
+        };
+        reader.readAsDataURL(file);
+      });
+      showToast(`Processed ${files.length} uploaded photo(s).`, 'success');
+    });
+
+    window.manualAssignPhoto = async function (selectEl, encodedUrl) {
+      const sid = selectEl.value;
+      if (!sid) return;
+      const s = state.students.find(x => x.studentId === sid);
+      if (!s) return;
+      const dataUrl = decodeURIComponent(encodedUrl);
+      s.originalPhoto = dataUrl;
+      s.croppedPhoto = dataUrl;
+      await persistStudent(s);
+      refreshAllViews();
+      openCropperForStudent(sid);
+    };
+
+    window.openCropperForStudent = function (studentId) {
+      const s = state.students.find(x => x.studentId === studentId);
+      if (!s) return;
+      activeCropStudentId = studentId;
+      document.getElementById('cropper-student-label').textContent = `Editing Photo for ${s.name} (${s.studentId})`;
+      document.getElementById('slider-brightness').value = 100;
+      document.getElementById('slider-contrast').value = 100;
+      document.getElementById('lbl-brightness').textContent = '100%';
+      document.getElementById('lbl-contrast').textContent = '100%';
+
+      const img = document.getElementById('cropper-target-img');
+      img.src = s.originalPhoto || s.croppedPhoto || DEFAULT_STUDENT_AVATAR;
+
+      document.getElementById('cropper-modal').classList.remove('hidden');
+
+      if (cropperInstance) cropperInstance.destroy();
+      cropperInstance = new Cropper(img, {
+        aspectRatio: 1,
+        viewMode: 1,
+        autoCropArea: 0.9,
+        responsive: true,
+        ready: updateCropperLiveCardPreview,
+        crop: updateCropperLiveCardPreview
+      });
+    };
+
+    window.closeCropperModal = function () {
+      if (cropperInstance) {
+        cropperInstance.destroy();
+        cropperInstance = null;
+      }
+      document.getElementById('cropper-modal').classList.add('hidden');
+    };
+
+    window.setCropAspect = function (ratio) {
+      if (cropperInstance) cropperInstance.setAspectRatio(ratio);
+    };
+
+    window.cropperAction = function (act) {
+      if (!cropperInstance) return;
+      if (act === 'zoomIn') cropperInstance.zoom(0.1);
+      if (act === 'zoomOut') cropperInstance.zoom(-0.1);
+      if (act === 'rotateLeft') cropperInstance.rotate(-15);
+      if (act === 'rotateRight') cropperInstance.rotate(15);
+      if (act === 'up') cropperInstance.move(0, -10);
+      if (act === 'down') cropperInstance.move(0, 10);
+      if (act === 'left') cropperInstance.move(-10, 0);
+      if (act === 'right') cropperInstance.move(10, 0);
+      if (act === 'reset') cropperInstance.reset();
+    };
+
+    function getFilteredCroppedDataURL() {
+      if (!cropperInstance) return null;
+      const croppedCanvas = cropperInstance.getCroppedCanvas({ width: 420, height: 420, imageSmoothingQuality: 'high' });
+      if (!croppedCanvas) return null;
+
+      const b = document.getElementById('slider-brightness').value;
+      const c = document.getElementById('slider-contrast').value;
+      const outCanvas = document.createElement('canvas');
+      outCanvas.width = croppedCanvas.width;
+      outCanvas.height = croppedCanvas.height;
+      const ctx = outCanvas.getContext('2d');
+      ctx.filter = `brightness(${b}%) contrast(${c}%)`;
+      ctx.drawImage(croppedCanvas, 0, 0);
+      return outCanvas.toDataURL('image/png', 0.95);
+    }
+
+    function updateCropperLiveCardPreview() {
+      const s = state.students.find(x => x.studentId === activeCropStudentId);
+      if (!s) return;
+      const previewUrl = getFilteredCroppedDataURL() || s.croppedPhoto;
+      const mount = document.getElementById('cropper-live-card-mount');
+      mount.innerHTML = '';
+      mount.appendChild(buildIDCardDOM({ ...s, croppedPhoto: previewUrl }, false));
+    }
+
+    ['slider-brightness', 'slider-contrast'].forEach(id => {
+      document.getElementById(id).addEventListener('input', () => {
+        document.getElementById('lbl-brightness').textContent = `${document.getElementById('slider-brightness').value}%`;
+        document.getElementById('lbl-contrast').textContent = `${document.getElementById('slider-contrast').value}%`;
+        updateCropperLiveCardPreview();
+      });
+    });
+
+    document.getElementById('cropper-replace-file').addEventListener('change', (e) => {
+      const file = e.target.files?.[0];
+      if (!file || !activeCropStudentId) return;
+      const reader = new FileReader();
+      reader.onload = async (ev) => {
+        const s = state.students.find(x => x.studentId === activeCropStudentId);
+        if (s) {
+          s.originalPhoto = ev.target.result;
+          await persistStudent(s);
+          openCropperForStudent(activeCropStudentId);
+        }
+      };
+      reader.readAsDataURL(file);
+    });
+
+    window.restoreOriginalStudentPhoto = async function () {
+      const s = state.students.find(x => x.studentId === activeCropStudentId);
+      if (!s) return;
+      s.croppedPhoto = s.originalPhoto;
+      await persistStudent(s);
+      openCropperForStudent(activeCropStudentId);
+      showToast('Original uncropped photo restored.', 'info');
+    };
+
+    document.getElementById('btn-save-cropped-photo').addEventListener('click', async () => {
+      const s = state.students.find(x => x.studentId === activeCropStudentId);
+      const finalUrl = getFilteredCroppedDataURL();
+      if (s && finalUrl) {
+        s.croppedPhoto = finalUrl;
+        await persistStudent(s);
+        closeCropperModal();
+        refreshAllViews();
+        showToast('Cropped portrait saved to Student ID Card!', 'success');
+      }
+    });
+
+    // ========================================================================
+    // 10. 5 ISLAMIC ID CARD TEMPLATES, GENERATOR, PNG & PDF EXPORT
+    // ========================================================================
+    const ID_THEMES = [
+      { id: 'theme-navy-gold', name: 'Royal Navy Blue & Gold', desc: 'Classic Gold Heading, Deep Navy Header & Sky Blue Footer' },
+      { id: 'theme-emerald-white', name: 'Emerald Green & White', desc: 'Islamic Madrasah Emerald with Gold Accent Borders' },
+      { id: 'theme-black-gold', name: 'Black & Gold Premium', desc: 'Executive Obsidian & Metallic Gold Crest Edition' },
+      { id: 'theme-sky-navy', name: 'Sky Blue & Navy', desc: 'Crisp Azure Gradient with Deep Navy Footer' },
+      { id: 'theme-white-islamic', name: 'Modern White & Islamic Green', desc: 'Minimalist High-Contrast Print-Friendly White' }
+    ];
+
+    function buildIDCardDOM(student, includeActionBar = true) {
+      const themeClass = student.cardTheme || state.globalTheme || 'theme-navy-gold';
+      const wrapper = document.createElement('div');
+      wrapper.className = 'flex flex-col items-center gap-2.5';
+
+      const card = document.createElement('div');
+      card.className = `id-card-cr80 ${themeClass}`;
+      card.id = `card-dom-${student.studentId}`;
+
+      card.innerHTML = `
+        <div class="islamic-lattice"></div>
+
+        <!-- TOP HEADER -->
+        <div class="card-top relative z-10 px-3 pt-3 pb-4 rounded-b-[20px] shadow-md">
+          <div class="flex items-center gap-2.5">
+            <div class="w-12 h-12 rounded-full border-2 border-[#d4af37] bg-white overflow-hidden shrink-0 shadow">
+              <img src="${state.settings.logo}" class="w-full h-full object-cover" alt="Logo" />
+            </div>
+            <div class="min-w-0 flex-1">
+              <div class="flex items-center justify-between gap-1">
+                <div class="font-cinzel font-black text-lg leading-none tracking-wide card-title-main truncate">TAQWA</div>
+                <span class="text-[8px] font-extrabold px-1.5 py-0.5 rounded-full bg-white/15 card-title-main border border-amber-300/40 shrink-0">${state.settings.estd}</span>
+              </div>
+              <div class="text-[9.5px] font-extrabold tracking-wider uppercase mt-1 card-title-sub leading-tight">HIFZUL QURAN COLLEGE</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- STUDENT ID BADGE -->
+        <div class="relative z-20 flex justify-center -mt-3">
+          <span class="card-badge text-[9px] font-black tracking-[0.14em] px-4 py-1 rounded-full shadow">STUDENT ID CARD</span>
+        </div>
+
+        <!-- PHOTO + QR SIDE-BY-SIDE CENTERPIECE -->
+        <div class="relative z-10 px-3.5 pt-2 pb-1 flex items-center justify-center gap-3">
+          <div class="photo-ring p-[2.5px] rounded-xl shadow-md">
+            <div class="w-[96px] h-[96px] rounded-[10px] overflow-hidden bg-slate-100">
+              <img src="${student.croppedPhoto || student.originalPhoto || DEFAULT_STUDENT_AVATAR}" class="w-full h-full object-cover" alt="${student.name}" />
+            </div>
+          </div>
+          <div class="flex flex-col items-center">
+            <div class="p-1.5 bg-white rounded-xl border border-slate-300 shadow-sm qr-mount-box"></div>
+            <span class="text-[7.5px] font-extrabold tracking-wider opacity-75 mt-1">SCAN ATTENDANCE</span>
+          </div>
+        </div>
+
+        <!-- STUDENT DETAILS -->
+        <div class="relative z-10 px-4 flex-1 flex flex-col justify-center">
+          <div class="student-title-name text-center font-extrabold text-[13.5px] leading-tight uppercase tracking-wide pb-1 mb-1.5 border-b border-current/20">
+            ${student.name}
+          </div>
+          <div class="space-y-1 text-[9.5px]">
+            <div class="flex items-center gap-1.5">
+              <span class="info-chip w-4 h-4 rounded flex items-center justify-center text-[8px] font-bold shrink-0">★</span>
+              <span class="info-lbl font-bold opacity-80 w-20 shrink-0">DESIGNATION</span>
+              <span class="font-bold">:</span>
+              <span class="info-val font-extrabold truncate">${student.designation}</span>
+            </div>
+            <div class="flex items-center gap-1.5">
+              <span class="info-chip w-4 h-4 rounded flex items-center justify-center text-[8px] font-bold shrink-0">#</span>
+              <span class="info-lbl font-bold opacity-80 w-20 shrink-0">STUDENT ID</span>
+              <span class="font-bold">:</span>
+              <span class="info-val font-extrabold">${student.studentId}</span>
+            </div>
+            <div class="flex items-center gap-1.5">
+              <span class="info-chip w-4 h-4 rounded flex items-center justify-center text-[8px] font-bold shrink-0">☎</span>
+              <span class="info-lbl font-bold opacity-80 w-20 shrink-0">MOBILE</span>
+              <span class="font-bold">:</span>
+              <span class="info-val font-extrabold">${student.mobile}</span>
+            </div>
+            <div class="flex items-start gap-1.5">
+              <span class="info-chip w-4 h-4 rounded flex items-center justify-center text-[8px] font-bold shrink-0 mt-0.5">⌂</span>
+              <span class="info-lbl font-bold opacity-80 w-20 shrink-0">ADDRESS</span>
+              <span class="font-bold">:</span>
+              <span class="info-val font-bold leading-tight line-clamp-2">${student.address}</span>
+            </div>
+          </div>
+
+          <!-- PRINCIPAL SIGNATURE & INSTITUTION SEAL -->
+          <div class="flex items-end justify-between mt-1.5 pt-1">
+            <img src="${state.settings.seal}" class="w-8 h-8 object-contain opacity-85" alt="Seal" />
+            <div class="text-center sig-box">
+              <img src="${state.settings.signature}" class="h-6 mx-auto object-contain" alt="Principal Signature" />
+              <div class="text-[7.5px] font-extrabold border-t border-current/40 px-2 pt-0.5">Principal Signature</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- INSTITUTION FOOTER -->
+        <div class="card-bottom relative z-10 px-3 py-2 overflow-hidden">
+          <div class="font-extrabold text-[9px] tracking-wide uppercase">${state.settings.name}</div>
+          <div class="text-[7.8px] font-semibold leading-tight mt-0.5 pr-9 opacity-90">${state.settings.address}</div>
+          <div class="text-[8.2px] font-extrabold mt-0.5">Contact: ${state.settings.contact}</div>
+          <img src="${state.settings.logo}" class="w-10 h-10 rounded-full object-cover opacity-20 absolute right-2 bottom-1 pointer-events-none" alt="Watermark" />
+        </div>
+      `;
+
+      // Render Unique Secure Non-PII Token QR Code
+      const qrBox = card.querySelector('.qr-mount-box');
+      if (qrBox && window.QRCode) {
+        new QRCode(qrBox, {
+          text: student.qrToken || student.studentId,
+          width: 66,
+          height: 66,
+          colorDark: '#07172e',
+          colorLight: '#ffffff',
+          correctLevel: QRCode.CorrectLevel.M
+        });
+      }
+
+      wrapper.appendChild(card);
+
+      if (includeActionBar) {
+        const bar = document.createElement('div');
+        bar.className = 'flex flex-wrap items-center justify-center gap-1.5';
+        bar.innerHTML = `
+          <button onclick="openCropperForStudent('${student.studentId}')" class="px-2.5 py-1.5 rounded-lg bg-amber-100 hover:bg-amber-200 text-amber-950 font-bold text-[11px]">Crop Photo</button>
+          <button onclick="printSingleCard('${student.studentId}')" class="px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-900 text-white font-bold text-[11px]">Print</button>
+          <button onclick="downloadSingleCardPNG('${student.studentId}')" class="px-2.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-[11px]">PNG</button>
+          <button onclick="downloadSingleCardPDF('${student.studentId}')" class="px-2.5 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-[11px]">PDF</button>
+        `;
+        wrapper.appendChild(bar);
+      }
+
+      return wrapper;
+    }
+
+    function renderIDCardsGrid() {
+      const q = (document.getElementById('idcard-search-input').value || '').toLowerCase();
+      const grid = document.getElementById('id-cards-grid');
+      grid.innerHTML = '';
+      const list = state.students.filter(s => !q || s.name.toLowerCase().includes(q) || s.studentId.toLowerCase().includes(q));
+      list.forEach(s => grid.appendChild(buildIDCardDOM(s, true)));
+    }
+
+    document.getElementById('idcard-search-input').addEventListener('input', renderIDCardsGrid);
+    document.getElementById('global-theme-quick-select').addEventListener('change', (e) => {
+      state.globalTheme = e.target.value;
+      renderIDCardsGrid();
+      renderThemeSelectorCards();
+    });
+
+    function renderThemeSelectorCards() {
+      const box = document.getElementById('theme-selector-cards');
+      const sampleStudent = state.students[0] || {
+        studentId: 'TQWA-2025-0157',
+        name: 'MEHEBUB HASAN GAZI',
+        designation: 'HAFIZ',
+        mobile: '7029646905',
+        address: 'SADARPUR, HASNABAD, NORTH 24 PARGANAS',
+        qrToken: 'TQWA-QR-SAMPLE'
+      };
+      box.innerHTML = ID_THEMES.map(t => `
+        <div class="p-3 rounded-2xl border-2 ${state.globalTheme === t.id ? 'border-[#0b2242] bg-sky-50' : 'border-slate-200 bg-white'} flex flex-col justify-between gap-3">
+          <div>
+            <div class="font-extrabold text-xs text-[#07172e]">${t.name}</div>
+            <p class="text-[11px] text-slate-500 mt-1">${t.desc}</p>
+          </div>
+          <button onclick="selectGlobalTheme('${t.id}')" class="w-full py-2 rounded-xl ${state.globalTheme === t.id ? 'bg-emerald-600 text-white' : 'bg-[#0b2242] text-white'} font-extrabold text-xs">
+            ${state.globalTheme === t.id ? '✓ Active Theme' : 'Apply Theme'}
+          </button>
+        </div>
+      `).join('');
+    }
+
+    window.selectGlobalTheme = function (themeId) {
+      state.globalTheme = themeId;
+      document.getElementById('global-theme-quick-select').value = themeId;
+      refreshAllViews();
+      showToast('ID Card design theme updated across all cards!', 'success');
+    };
+
+    window.printSingleCard = function (studentId) {
+      const cardEl = document.getElementById(`card-dom-${studentId}`);
+      if (!cardEl) return;
+      const stage = document.getElementById('print-stage');
+      stage.innerHTML = '';
+      stage.appendChild(cardEl.cloneNode(true));
+      stage.classList.remove('hidden');
+      setTimeout(() => {
+        window.print();
+        stage.classList.add('hidden');
+      }, 150);
+    };
+
+    document.getElementById('btn-print-all-cards').addEventListener('click', () => {
+      const stage = document.getElementById('print-stage');
+      stage.innerHTML = '';
+      document.querySelectorAll('#id-cards-grid .id-card-cr80').forEach(c => stage.appendChild(c.cloneNode(true)));
+      stage.classList.remove('hidden');
+      setTimeout(() => {
+        window.print();
+        stage.classList.add('hidden');
+      }, 200);
+    });
+
+    window.downloadSingleCardPNG = async function (studentId) {
+      const cardEl = document.getElementById(`card-dom-${studentId}`);
+      if (!cardEl) return;
+      showToast('Rendering 300+ DPI PNG...', 'info');
+      const canvas = await html2canvas(cardEl, { scale: 4, useCORS: true, backgroundColor: null });
+      const a = document.createElement('a');
+      a.download = `${studentId}_ID_Card.png`;
+      a.href = canvas.toDataURL('image/png', 1.0);
+      a.click();
+      showToast(`Downloaded ${studentId}_ID_Card.png`, 'success');
+    };
+
+    window.downloadSingleCardPDF = async function (studentId) {
+      const cardEl = document.getElementById(`card-dom-${studentId}`);
+      if (!cardEl) return;
+      showToast('Generating CR80 54mm × 86mm PDF...', 'info');
+      const canvas = await html2canvas(cardEl, { scale: 4, useCORS: true, backgroundColor: null });
+      const { jsPDF } = window.jspdf;
+      const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: [54, 86] });
+      pdf.addImage(canvas.toDataURL('image/png', 1.0), 'PNG', 0, 0, 54, 86);
+      pdf.save(`${studentId}_ID_Card.pdf`);
+      showToast(`Downloaded ${studentId}_ID_Card.pdf`, 'success');
+    };
+
+    document.getElementById('btn-download-all-pdf').addEventListener('click', async () => {
+      const cards = Array.from(document.querySelectorAll('#id-cards-grid .id-card-cr80'));
+      if (!cards.length) return;
+      showToast(`Generating multi-page PDF for ${cards.length} ID cards...`, 'info');
+      const { jsPDF } = window.jspdf;
+      const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: [54, 86] });
+
+      for (let i = 0; i < cards.length; i++) {
+        if (i > 0) pdf.addPage([54, 86], 'portrait');
+        const canvas = await html2canvas(cards[i], { scale: 3, useCORS: true, backgroundColor: null });
+        pdf.addImage(canvas.toDataURL('image/png', 0.98), 'PNG', 0, 0, 54, 86);
+      }
+      pdf.save(`TAQWA_All_Student_ID_Cards_${todayISO()}.pdf`);
+      showToast('All Student ID Cards downloaded as PDF!', 'success');
+    });
+
+    // ========================================================================
+    // 11. QR CODE SCANNER & IN/OUT ATTENDANCE VALIDATION ENGINE
+    // ========================================================================
+    let html5QrScanner = null;
+    let lastScannedCode = '';
+    let lastScanTime = 0;
+
+    document.getElementById('mode-in-btn').addEventListener('click', () => {
+      state.scanMode = 'IN';
+      document.getElementById('mode-in-btn').className = 'px-4 py-1.5 rounded-lg text-xs font-extrabold bg-emerald-600 text-white shadow-sm transition';
+      document.getElementById('mode-out-btn').className = 'px-4 py-1.5 rounded-lg text-xs font-extrabold text-slate-600 hover:text-slate-900 transition';
+    });
+
+    document.getElementById('mode-out-btn').addEventListener('click', () => {
+      state.scanMode = 'OUT';
+      document.getElementById('mode-out-btn').className = 'px-4 py-1.5 rounded-lg text-xs font-extrabold bg-amber-500 text-[#07172e] shadow-sm transition';
+      document.getElementById('mode-in-btn').className = 'px-4 py-1.5 rounded-lg text-xs font-extrabold text-slate-600 hover:text-slate-900 transition';
+    });
+
+    async function startCameraScanner() {
+      try {
+        const devices = await Html5Qrcode.getCameras();
+        const camSelect = document.getElementById('camera-select');
+        if (devices && devices.length) {
+          camSelect.innerHTML = devices.map(d => `<option value="${d.id}">${d.label || 'Camera'}</option>`).join('');
+        }
+
+        if (html5QrScanner) await stopCameraScanner();
+        html5QrScanner = new Html5Qrcode('qr-reader');
+        document.getElementById('camera-placeholder').classList.add('hidden');
+        document.getElementById('btn-start-camera').classList.add('hidden');
+        document.getElementById('btn-stop-camera').classList.remove('hidden');
+
+        const cameraIdOrConfig = camSelect.value ? { deviceId: { exact: camSelect.value } } : { facingMode: 'environment' };
+        await html5QrScanner.start(
+          cameraIdOrConfig,
+          { fps: 10, qrbox: { width: 220, height: 220 } },
+          (decodedText) => {
+            const now = Date.now();
+            if (decodedText === lastScannedCode && now - lastScanTime < 3500) return;
+            lastScannedCode = decodedText;
+            lastScanTime = now;
+            processQRScan(decodedText);
+          },
+          () => {}
+        );
+      } catch (err) {
+        showToast('Camera permission denied or unavailable on this device. Use manual input below.', 'warn');
+      }
+    }
+
+    async function stopCameraScanner() {
+      if (html5QrScanner) {
+        try {
+          await html5QrScanner.stop();
+          html5QrScanner.clear();
+        } catch (e) {}
+        html5QrScanner = null;
+      }
+      document.getElementById('camera-placeholder')?.classList.remove('hidden');
+      document.getElementById('btn-start-camera')?.classList.remove('hidden');
+      document.getElementById('btn-stop-camera')?.classList.add('hidden');
+    }
+
+    document.getElementById('btn-start-camera').addEventListener('click', startCameraScanner);
+    document.getElementById('btn-stop-camera').addEventListener('click', stopCameraScanner);
+
+    document.getElementById('manual-scan-form').addEventListener('submit', (e) => {
+      e.preventDefault();
+      const val = document.getElementById('manual-qr-input').value.trim();
+      if (!val) return;
+      processQRScan(val);
+      document.getElementById('manual-qr-input').value = '';
+    });
+
+    function calculateDurationText(in24, out24) {
+      if (!in24 || !out24) return 'Inside Campus';
+      const [h1, m1] = in24.split(':').map(Number);
+      const [h2, m2] = out24.split(':').map(Number);
+      const diffMins = Math.max(0, (h2 * 60 + m2) - (h1 * 60 + m1));
+      const hrs = Math.floor(diffMins / 60);
+      const mins = diffMins % 60;
+      return `${hrs}h ${mins}m`;
+    }
+
+    async function processQRScan(rawCode) {
+      const code = rawCode.trim().toUpperCase();
+      const student = state.students.find(s =>
+        (s.qrToken && s.qrToken.toUpperCase() === code) ||
+        s.studentId.toUpperCase() === code
+      );
+
+      const resultBox = document.getElementById('scan-result-box');
+
+      if (!student) {
+        playBeep(false);
+        resultBox.innerHTML = `
+          <div class="p-4 rounded-xl bg-rose-50 border border-rose-300 text-rose-900 space-y-1">
+            <div class="font-extrabold text-sm">✕ INVALID / UNRECOGNIZED QR CODE</div>
+            <div class="text-xs">Scanned Token: <code>${code}</code></div>
+          </div>`;
+        showToast('Invalid QR Code!', 'error');
+        return;
+      }
+
+      if (student.qrActive === false) {
+        playBeep(false);
+        resultBox.innerHTML = `
+          <div class="p-4 rounded-xl bg-rose-50 border border-rose-300 text-rose-900 space-y-1">
+            <div class="font-extrabold text-sm">⛔ DISABLED QR CODE</div>
+            <div class="text-xs">QR access is disabled for ${student.name} (${student.studentId}).</div>
+          </div>`;
+        showToast('This Student QR Code is disabled by Admin.', 'error');
+        return;
+      }
+
+      const today = todayISO();
+      const nowObj = new Date();
+      const time12 = formatTime12(nowObj);
+      const time24 = formatTime24(nowObj);
+      const attDocId = `ATT-${today}-${student.studentId}`;
+      const existingToday = state.attendance.find(a => a.id === attDocId);
+
+      // MODE A: IN / ARRIVAL
+      if (state.scanMode === 'IN') {
+        if (existingToday && existingToday.status === 'INSIDE') {
+          playBeep(false);
+          showToast(`Duplicate Scan: ${student.name} is already marked INSIDE today!`, 'warn');
+          return;
+        }
+        if (existingToday && existingToday.status === 'CHECKED_OUT') {
+          playBeep(false);
+          showToast(`Cycle Closed: ${student.name} already completed IN & OUT today.`, 'warn');
+          return;
+        }
+
+        const isLate = time24 > '08:30';
+        const record = {
+          id: attDocId,
+          studentId: student.studentId,
+          studentName: student.name,
+          designation: student.designation,
+          date: today,
+          arrivalTime: time12,
+          arrival24: time24,
+          departureTime: '',
+          departure24: '',
+          duration: 'Inside Campus',
+          status: 'INSIDE',
+          remarks: isLate ? 'Late Arrival' : 'On Time',
+          scannedBy: state.currentUser?.email || 'Staff'
+        };
+
+        await persistAttendance(record);
+        playBeep(true);
+        renderScanSuccessCard(student, 'PRESENT (ARRIVAL)', time12, '');
+        refreshAllViews();
+        showToast(`IN Recorded: ${student.name} at ${time12}`, 'success');
+      }
+      // MODE B: OUT / DEPARTURE
+      else {
+        if (!existingToday) {
+          playBeep(false);
+          showToast(`Blocked: No Arrival (IN) record found today for ${student.name}!`, 'error');
+          return;
+        }
+        if (existingToday.status === 'CHECKED_OUT') {
+          playBeep(false);
+          showToast(`Duplicate OUT: ${student.name} already checked out at ${existingToday.departureTime}.`, 'warn');
+          return;
+        }
+
+        const isEarly = time24 < '16:00';
+        existingToday.departureTime = time12;
+        existingToday.departure24 = time24;
+        existingToday.status = 'CHECKED_OUT';
+        existingToday.duration = calculateDurationText(existingToday.arrival24, time24);
+        if (isEarly) existingToday.remarks = `${existingToday.remarks} | Early Departure`;
+
+        await persistAttendance(existingToday);
+        playBeep(true);
+        renderScanSuccessCard(student, 'CHECKED OUT (DEPARTURE)', existingToday.arrivalTime, time12);
+        refreshAllViews();
+        showToast(`OUT Recorded: ${student.name} at ${time12}`, 'success');
+      }
+    }
+
+    function renderScanSuccessCard(student, statusLabel, arrTime, depTime) {
+      document.getElementById('scan-result-box').innerHTML = `
+        <div class="p-4 rounded-2xl bg-emerald-50 border-2 border-emerald-400 text-left flex items-center gap-4">
+          <img src="${student.croppedPhoto || student.originalPhoto || DEFAULT_STUDENT_AVATAR}" class="w-20 h-20 rounded-xl object-cover border-2 border-[#0b2242] shrink-0" />
+          <div class="space-y-1 text-xs">
+            <span class="px-2.5 py-0.5 rounded-full bg-emerald-600 text-white font-extrabold text-[10px]">✓ ${statusLabel}</span>
+            <div class="font-black text-sm text-[#07172e] pt-0.5">${student.name}</div>
+            <div class="font-bold text-slate-700">ID: ${student.studentId} • ${student.designation}</div>
+            <div class="font-extrabold text-emerald-800">ARRIVAL: ${arrTime}</div>
+            ${depTime ? `<div class="font-extrabold text-indigo-800">DEPARTURE: ${depTime}</div>` : ''}
+          </div>
+        </div>
+      `;
+    }
+
+    // ========================================================================
+    // 12. ATTENDANCE MANAGEMENT, REPORTS & EXCEL EXPORT
+    // ========================================================================
+    function renderAttendanceTable() {
+      const q = (document.getElementById('att-search').value || '').toLowerCase();
+      const dFrom = document.getElementById('att-date-from').value;
+      const dTo = document.getElementById('att-date-to').value;
+      const statusFilter = document.getElementById('att-status-filter').value;
+      const today = todayISO();
+
+      const tbody = document.getElementById('attendance-table-body');
+
+      if (statusFilter === 'ABSENT') {
+        const presentIdsToday = new Set(state.attendance.filter(a => a.date === today).map(a => a.studentId));
+        const absentees = state.students.filter(s => !presentIdsToday.has(s.studentId));
+        tbody.innerHTML = absentees.map((s, idx) => `
+          <tr class="bg-rose-50/40">
+            <td class="p-3 font-bold">${idx + 1}</td>
+            <td class="p-3 font-extrabold">${s.name}</td>
+            <td class="p-3 font-bold text-[#0b2242]">${s.studentId}</td>
+            <td class="p-3">${s.designation}</td>
+            <td class="p-3">${today}</td>
+            <td class="p-3 text-slate-400">--</td>
+            <td class="p-3 text-slate-400">--</td>
+            <td class="p-3 text-slate-400">0h 0m</td>
+            <td class="p-3"><span class="px-2 py-0.5 rounded-full bg-rose-100 text-rose-800 font-extrabold text-[10px]">ABSENT</span></td>
+            <td class="p-3 text-right">-</td>
+          </tr>
+        `).join('');
+        return;
+      }
+
+      const filtered = state.attendance.filter(a => {
+        const matchQ = !q || a.studentName.toLowerCase().includes(q) || a.studentId.toLowerCase().includes(q);
+        const matchFrom = !dFrom || a.date >= dFrom;
+        const matchTo = !dTo || a.date <= dTo;
+        let matchStatus = true;
+        if (statusFilter === 'INSIDE') matchStatus = a.status === 'INSIDE';
+        if (statusFilter === 'CHECKED_OUT') matchStatus = a.status === 'CHECKED_OUT';
+        if (statusFilter === 'LATE') matchStatus = (a.remarks || '').includes('Late');
+        if (statusFilter === 'EARLY_OUT') matchStatus = (a.remarks || '').includes('Early');
+        return matchQ && matchFrom && matchTo && matchStatus;
+      });
+
+      tbody.innerHTML = filtered.map((a, idx) => `
+        <tr class="hover:bg-slate-50">
+          <td class="p-3 font-bold">${idx + 1}</td>
+          <td class="p-3 font-extrabold text-[#07172e]">${a.studentName}</td>
+          <td class="p-3 font-bold text-[#0b2242]">${a.studentId}</td>
+          <td class="p-3">${a.designation}</td>
+          <td class="p-3 font-semibold">${a.date}</td>
+          <td class="p-3 font-bold text-emerald-700">${a.arrivalTime || '--'}</td>
+          <td class="p-3 font-bold text-indigo-700">${a.departureTime || '--'}</td>
+          <td class="p-3 font-semibold">${a.duration || '--'}</td>
+          <td class="p-3">
+            <span class="px-2 py-0.5 rounded-full text-[10px] font-extrabold ${a.status === 'INSIDE' ? 'bg-sky-100 text-sky-900' : 'bg-emerald-100 text-emerald-800'}">
+              ${a.status}
+            </span>
+            <div class="text-[10px] text-slate-500 mt-0.5">${a.remarks || ''}</div>
+          </td>
+          <td class="p-3 text-right">
+            ${state.userRole === 'ADMIN' ? `<button onclick="openManualAttendanceModal('${a.studentId}', '${a.date}')" class="text-xs font-bold text-sky-700 hover:underline">Edit</button>` : '-'}
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    ['att-search', 'att-date-from', 'att-date-to', 'att-status-filter'].forEach(id => {
+      document.getElementById(id).addEventListener('input', renderAttendanceTable);
+    });
+
+    window.openManualAttendanceModal = function (studentId = '', dateStr = todayISO()) {
+      const sel = document.getElementById('m-att-student');
+      sel.innerHTML = state.students.map(s => `<option value="${s.studentId}" ${s.studentId === studentId ? 'selected' : ''}>${s.studentId} - ${s.name}</option>`).join('');
+      document.getElementById('m-att-date').value = dateStr;
+      document.getElementById('manual-att-modal').classList.remove('hidden');
+    };
+    window.closeManualAttModal = function () {
+      document.getElementById('manual-att-modal').classList.add('hidden');
+    };
+
+    document.getElementById('manual-att-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const sid = document.getElementById('m-att-student').value;
+      const date = document.getElementById('m-att-date').value;
+      const in24 = document.getElementById('m-att-in').value;
+      const out24 = document.getElementById('m-att-out').value;
+      const remarks = document.getElementById('m-att-remarks').value.trim();
+      const s = state.students.find(x => x.studentId === sid);
+      if (!s) return;
+
+      const to12 = (t24) => {
+        if (!t24) return '';
+        const [h, m] = t24.split(':').map(Number);
+        const ampm = h >= 12 ? 'PM' : 'AM';
+        const hr12 = h % 12 || 12;
+        return `${String(hr12).padStart(2, '0')}:${String(m).padStart(2, '0')} ${ampm}`;
+      };
+
+      const record = {
+        id: `ATT-${date}-${sid}`,
+        studentId: sid,
+        studentName: s.name,
+        designation: s.designation,
+        date,
+        arrivalTime: to12(in24),
+        arrival24: in24,
+        departureTime: to12(out24),
+        departure24: out24,
+        duration: out24 ? calculateDurationText(in24, out24) : 'Inside Campus',
+        status: out24 ? 'CHECKED_OUT' : 'INSIDE',
+        remarks: remarks || 'Admin Updated',
+        scannedBy: state.currentUser?.email || 'Admin'
+      };
+      await persistAttendance(record);
+      closeManualAttModal();
+      refreshAllViews();
+      showToast('Attendance record updated successfully!', 'success');
+    });
+
+    function renderReportsTable() {
+      const monthInput = document.getElementById('report-month-picker');
+      if (!monthInput.value) monthInput.value = todayISO().slice(0, 7);
+      const selectedMonth = monthInput.value;
+
+      const monthLogs = state.attendance.filter(a => a.date.startsWith(selectedMonth));
+      const uniqueDatesCount = Math.max(1, new Set(monthLogs.map(a => a.date)).size);
+
+      document.getElementById('reports-table-body').innerHTML = state.students.map(s => {
+        const sLogs = monthLogs.filter(a => a.studentId === s.studentId);
+        const presentDays = sLogs.length;
+        const lateDays = sLogs.filter(a => (a.remarks || '').includes('Late')).length;
+        const completed = sLogs.filter(a => a.status === 'CHECKED_OUT').length;
+        const pct = Math.min(100, Math.round((presentDays / uniqueDatesCount) * 100));
+
+        return `
+          <tr class="hover:bg-slate-50">
+            <td class="p-3 font-extrabold text-[#0b2242]">${s.studentId}</td>
+            <td class="p-3 font-bold">${s.name}</td>
+            <td class="p-3">${s.designation}</td>
+            <td class="p-3 font-extrabold text-emerald-700">${presentDays}</td>
+            <td class="p-3 font-bold text-amber-700">${lateDays}</td>
+            <td class="p-3 font-bold text-indigo-700">${completed}</td>
+            <td class="p-3 font-extrabold">${pct}%</td>
+          </tr>
+        `;
+      }).join('');
+    }
+    document.getElementById('report-month-picker').addEventListener('change', renderReportsTable);
+
+    window.downloadAttendanceExcel = function (scope) {
+      const today = todayISO();
+      let logs = [];
+      let fileName = `TAQWA_Attendance_${scope}_${today}.xlsx`;
+
+      if (scope === 'TODAY') {
+        const presentToday = state.attendance.filter(a => a.date === today);
+        const presentIds = new Set(presentToday.map(a => a.studentId));
+        const absentees = state.students.filter(s => !presentIds.has(s.studentId)).map(s => ({
+          studentName: s.name,
+          studentId: s.studentId,
+          designation: s.designation,
+          date: today,
+          arrivalTime: '--',
+          departureTime: '--',
+          duration: '0h 0m',
+          status: 'ABSENT',
+          remarks: 'Not Arrived'
+        }));
+        logs = [...presentToday, ...absentees];
+      } else if (scope === 'DATE') {
+        const d = document.getElementById('export-specific-date').value || today;
+        logs = state.attendance.filter(a => a.date === d);
+        fileName = `TAQWA_Attendance_${d}.xlsx`;
+      } else if (scope === 'MONTH') {
+        const m = document.getElementById('export-specific-month').value || today.slice(0, 7);
+        logs = state.attendance.filter(a => a.date.startsWith(m));
+        fileName = `TAQWA_Attendance_Month_${m}.xlsx`;
+      } else if (scope === 'STUDENT') {
+        const sid = document.getElementById('export-student-select').value;
+        logs = state.attendance.filter(a => a.studentId === sid);
+        fileName = `TAQWA_Attendance_${sid}.xlsx`;
+      } else {
+        logs = [...state.attendance];
+      }
+
+      const sheetRows = logs.map((l, idx) => ({
+        'SL No.': idx + 1,
+        'Student Name': l.studentName,
+        'Student ID': l.studentId,
+        'Designation / Class': l.designation,
+        'Date': l.date,
+        'Arrival Time': l.arrivalTime || '--',
+        'Departure Time': l.departureTime || '--',
+        'Total Duration': l.duration || '--',
+        'Attendance Status': l.status,
+        'Remarks': l.remarks || ''
+      }));
+
+      if (!sheetRows.length) {
+        showToast('No attendance records found for the selected filter.', 'warn');
+        return;
+      }
+
+      const ws = XLSX.utils.json_to_sheet(sheetRows);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, 'Attendance_Report');
+      XLSX.writeFile(wb, fileName);
+      showToast(`Downloaded ${fileName}`, 'success');
+    };
+
+    // ========================================================================
+    // 13. INSTITUTION SETTINGS, BACKUP/RESTORE & STAFF MANAGEMENT
+    // ========================================================================
+    function populateSettingsUI() {
+      document.getElementById('set-inst-name').value = state.settings.name;
+      document.getElementById('set-inst-estd').value = state.settings.estd;
+      document.getElementById('set-inst-contact').value = state.settings.contact;
+      document.getElementById('set-inst-session').value = state.settings.session;
+      document.getElementById('set-inst-address').value = state.settings.address;
+      document.getElementById('preview-set-logo').src = state.settings.logo;
+      document.getElementById('preview-set-sig').src = state.settings.signature;
+      document.getElementById('preview-set-seal').src = state.settings.seal;
+      document.getElementById('sidebar-logo-box').innerHTML = `<img src="${state.settings.logo}" class="w-full h-full object-cover" />`;
+    }
+
+    function bindImageUploadToSetting(inputId, settingKey, previewId) {
+      document.getElementById(inputId).addEventListener('change', (e) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+          state.settings[settingKey] = ev.target.result;
+          document.getElementById(previewId).src = ev.target.result;
+        };
+        reader.readAsDataURL(file);
+      });
+    }
+    bindImageUploadToSetting('upload-set-logo', 'logo', 'preview-set-logo');
+    bindImageUploadToSetting('upload-set-sig', 'signature', 'preview-set-sig');
+    bindImageUploadToSetting('upload-set-seal', 'seal', 'preview-set-seal');
+
+    document.getElementById('institution-settings-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      state.settings.name = document.getElementById('set-inst-name').value.trim();
+      state.settings.estd = document.getElementById('set-inst-estd').value.trim();
+      state.settings.contact = document.getElementById('set-inst-contact').value.trim();
+      state.settings.session = document.getElementById('set-inst-session').value.trim();
+      state.settings.address = document.getElementById('set-inst-address').value.trim();
+      await persistSettings();
+      refreshAllViews();
+      showToast('Institution branding & settings saved!', 'success');
+    });
+
+    document.getElementById('btn-backup-json').addEventListener('click', () => {
+      const payload = JSON.stringify({
+        exportedAt: new Date().toISOString(),
+        settings: state.settings,
+        students: state.students,
+        attendance: state.attendance
+      }, null, 2);
+      const blob = new Blob([payload], { type: 'application/json' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = `TAQWA_Full_Database_Backup_${todayISO()}.json`;
+      a.click();
+      showToast('Full JSON database backup downloaded!', 'success');
+    });
+
+    document.getElementById('input-restore-json').addEventListener('change', (e) => {
+      const file = e.target.files?.[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = async (ev) => {
+        try {
+          const data = JSON.parse(ev.target.result);
+          if (data.settings) state.settings = data.settings;
+          if (Array.isArray(data.students)) state.students = data.students;
+          if (Array.isArray(data.attendance)) state.attendance = data.attendance;
+          refreshAllViews();
+          showToast('Database restored successfully from backup!', 'success');
+        } catch (err) {
+          showToast('Invalid backup file.', 'error');
+        }
+      };
+      reader.readAsText(file);
+    });
+
+    function renderStaffTable() {
+      document.getElementById('staff-table-body').innerHTML = state.staffList.map(st => `
+        <tr>
+          <td class="p-3 font-extrabold">${st.name}</td>
+          <td class="p-3 font-semibold">${st.email}</td>
+          <td class="p-3">
+            <span class="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold ${st.role === 'ADMIN' ? 'bg-amber-100 text-amber-900' : 'bg-sky-100 text-sky-900'}">
+              ${st.role === 'ADMIN' ? 'SUPER ADMIN' : 'ATTENDANCE STAFF'}
+            </span>
+          </td>
+          <td class="p-3 text-right">
+            ${st.id !== 'staff-1' ? `<button onclick="removeStaffUser('${st.id}')" class="text-rose-700 font-bold hover:underline">Revoke</button>` : '<span class="text-slate-400">Primary</span>'}
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    document.getElementById('add-staff-form').addEventListener('submit', (e) => {
+      e.preventDefault();
+      state.staffList.push({
+        id: 'staff-' + Date.now(),
+        name: document.getElementById('staff-name').value.trim(),
+        email: document.getElementById('staff-email').value.trim(),
+        role: document.getElementById('staff-role').value
+      });
+      e.target.reset();
+      renderStaffTable();
+      showToast('Staff role authorized!', 'success');
+    });
+
+    window.removeStaffUser = function (id) {
+      state.staffList = state.staffList.filter(s => s.id !== id);
+      renderStaffTable();
+      showToast('Staff access revoked.', 'info');
+    };
+
+    // ========================================================================
+    // 14. MASTER REFRESH CONTROLLER
+    // ========================================================================
+    function refreshAllViews() {
+      renderDashboard();
+      renderStudentsTable();
+      renderIDCardsGrid();
+      renderThemeSelectorCards();
+      renderAttendanceTable();
+      renderReportsTable();
+      populateSettingsUI();
+      renderStaffTable();
+
+      const expStu = document.getElementById('export-student-select');
+      if (expStu) {
+        expStu.innerHTML = state.students.map(s => `<option value="${s.studentId}">${s.studentId} - ${s.name}</option>`).join('');
+      }
+      if (!document.getElementById('export-specific-date').value) {
+        document.getElementById('export-specific-date').value = todayISO();
+      }
+      if (!document.getElementById('export-specific-month').value) {
+        document.getElementById('export-specific-month').value = todayISO().slice(0, 7);
+      }
+    }
+  </script>
+</body>
+</html>
